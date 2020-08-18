@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://miodawn.github.io</id>
+    <id>http://localhost:4000</id>
     <title>测试</title>
-    <updated>2020-08-18T15:13:30.107Z</updated>
+    <updated>2020-08-18T15:54:32.298Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://miodawn.github.io"/>
-    <link rel="self" href="https://miodawn.github.io/atom.xml"/>
+    <link rel="alternate" href="http://localhost:4000"/>
+    <link rel="self" href="http://localhost:4000/atom.xml"/>
     <subtitle>温故而知新</subtitle>
-    <logo>https://miodawn.github.io/images/avatar.png</logo>
-    <icon>https://miodawn.github.io/favicon.ico</icon>
+    <logo>http://localhost:4000/images/avatar.png</logo>
+    <icon>http://localhost:4000/favicon.ico</icon>
     <rights>All rights reserved 2020, 测试</rights>
     <entry>
         <title type="html"><![CDATA[Test]]></title>
-        <id>https://miodawn.github.io/post/test/</id>
-        <link href="https://miodawn.github.io/post/test/">
+        <id>http://localhost:4000/post/test/</id>
+        <link href="http://localhost:4000/post/test/">
         </link>
         <updated>2020-08-18T11:38:29.000Z</updated>
-        <content type="html"><![CDATA[<p>😃test测试😗<img src="https://miodawn.github.io/post-images/1597750923636.jpg" alt="" loading="lazy"></p>
+        <content type="html"><![CDATA[<!-- more -->
+<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
+✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...<br>
+😃test测试😗</p>
 ]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[Hello Gridea]]></title>
-        <id>https://miodawn.github.io/post/hello-gridea/</id>
-        <link href="https://miodawn.github.io/post/hello-gridea/">
+        <id>http://localhost:4000/post/hello-gridea/</id>
+        <link href="http://localhost:4000/post/hello-gridea/">
         </link>
         <updated>2018-12-11T16:00:00.000Z</updated>
         <content type="html"><![CDATA[<!-- more -->
