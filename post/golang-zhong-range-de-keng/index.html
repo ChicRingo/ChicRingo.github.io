@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中 range 的坑 | 测试</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597813841885">
+<link rel="shortcut icon" href="/favicon.ico?v=1597814771998">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -239,8 +239,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#1-range%E8%BF%AD%E4%BB%A3%E9%81%8D%E5%8E%86%E6%95%B0%E7%BB%84">1. range迭代遍历数组</a></li>
-<li><a href="#2-range%E8%BF%AD%E4%BB%A3%E9%81%8D%E5%8E%86%E5%88%87%E7%89%87">2. range迭代遍历切片</a></li>
+<li><a href="#1-range%E4%BC%9A%E5%A4%8D%E5%88%B6%E5%AF%B9%E8%B1%A1%E8%80%8C%E4%B8%8D%E6%98%AF%E4%B8%8D%E6%98%AF%E7%9B%B4%E6%8E%A5%E5%9C%A8%E5%8E%9F%E5%AF%B9%E8%B1%A1%E4%B8%8A%E6%93%8D%E4%BD%9C">1. range会复制对象，而不是不是直接在原对象上操作。</a></li>
+<li><a href="#2-%E4%BD%BF%E7%94%A8range%E8%BF%AD%E4%BB%A3%E9%81%8D%E5%8E%86%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B%E6%97%B6%E5%BA%95%E5%B1%82%E7%9A%84%E6%95%B0%E6%8D%AE%E4%B8%8D%E4%BC%9A%E8%A2%AB%E5%A4%8D%E5%88%B6">2. 使用range迭代遍历引用类型时，底层的数据不会被复制：</a></li>
 </ul>
 </li>
 </ul>
@@ -543,52 +543,50 @@
     <span class="meta-item">
       <span class="post-meta-divider">|</span>
       <i class="fa fa-file-word-o"></i>
-      <span>316<span class="pc-show language" data-lan="words">字数</span></span>
+      <span>306<span class="pc-show language" data-lan="words">字数</span></span>
     </span>
     
   </div>
 </section>
             <div class="post-body next-md-body" id="post_body">
-              <h3 id="1-range迭代遍历数组">1. range迭代遍历数组</h3>
-<p>会复制对象，而不是不是直接在原对象上操作。</p>
+              <h3 id="1-range会复制对象而不是不是直接在原对象上操作">1. range会复制对象，而不是不是直接在原对象上操作。</h3>
 <p>示例一：</p>
 <pre><code class="language-go">func main() {
-	a := [3]int{1, 2, 3}
-	for _, v := range a { // 复制一份a遍历[1, 2, 3]
-		v += 100 // v是复制对象中的值，不会改变a数组元素的值
-	}
-	fmt.Println(a) // 1 2 3
+    a := [3]int{1, 2, 3}
+    for _, v := range a { // 复制一份a遍历[1, 2, 3]
+        v += 100 // v是复制对象中的值，不会改变a数组元素的值
+    }
+    fmt.Println(a) // 1 2 3
 }
 </code></pre>
 <p>示例二：</p>
 <pre><code class="language-go">func main() {
-	a := [3]int{1, 2, 3}
-	for i, v := range a { // i,v从a复制的对象里提取出
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // 输出[1 200 300]
-		}
-		a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
-	}
-	fmt.Println(a) // 输出[101, 102, 103]
+    a := [3]int{1, 2, 3}
+    for i, v := range a { // i,v从a复制的对象里提取出
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // 输出[1 200 300]
+        }
+        a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
+    }
+    fmt.Println(a) // 输出[101, 102, 103]
 }
 </code></pre>
 <p>结果：</p>
 <pre><code class="language-powershell">[1 200 300]
 [101 102 103]
 </code></pre>
-<h3 id="2-range迭代遍历切片">2. range迭代遍历切片</h3>
-<p>迭代遍历引用类型时，底层的数据不会被复制：</p>
+<h3 id="2-使用range迭代遍历引用类型时底层的数据不会被复制">2. 使用range迭代遍历引用类型时，底层的数据不会被复制：</h3>
 <pre><code class="language-go">func main() {
-	a := []int{1, 2, 3} // 改成slice
-	for i, v := range a {
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // [1 200 300]
-		}
-		a[i] = v + 100
-	}
-	fmt.Println(a) // 输出[101 300 400]
+    a := []int{1, 2, 3} // 改成slice
+    for i, v := range a {
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // [1 200 300]
+        }
+        a[i] = v + 100
+    }
+    fmt.Println(a) // 输出[101 300 400]
 }
 
 </code></pre>
@@ -1607,46 +1605,44 @@
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://miodawn.github.io/post/golang-zhong-range-de-keng/"" data-c="
-          &lt;h3 id=&#34;1-range迭代遍历数组&#34;&gt;1. range迭代遍历数组&lt;/h3&gt;
-&lt;p&gt;会复制对象，而不是不是直接在原对象上操作。&lt;/p&gt;
+          &lt;h3 id=&#34;1-range会复制对象而不是不是直接在原对象上操作&#34;&gt;1. range会复制对象，而不是不是直接在原对象上操作。&lt;/h3&gt;
 &lt;p&gt;示例一：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func main() {
-	a := [3]int{1, 2, 3}
-	for _, v := range a { // 复制一份a遍历[1, 2, 3]
-		v += 100 // v是复制对象中的值，不会改变a数组元素的值
-	}
-	fmt.Println(a) // 1 2 3
+    a := [3]int{1, 2, 3}
+    for _, v := range a { // 复制一份a遍历[1, 2, 3]
+        v += 100 // v是复制对象中的值，不会改变a数组元素的值
+    }
+    fmt.Println(a) // 1 2 3
 }
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;示例二：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func main() {
-	a := [3]int{1, 2, 3}
-	for i, v := range a { // i,v从a复制的对象里提取出
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // 输出[1 200 300]
-		}
-		a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
-	}
-	fmt.Println(a) // 输出[101, 102, 103]
+    a := [3]int{1, 2, 3}
+    for i, v := range a { // i,v从a复制的对象里提取出
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // 输出[1 200 300]
+        }
+        a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
+    }
+    fmt.Println(a) // 输出[101, 102, 103]
 }
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;结果：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;[1 200 300]
 [101 102 103]
 &lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id=&#34;2-range迭代遍历切片&#34;&gt;2. range迭代遍历切片&lt;/h3&gt;
-&lt;p&gt;迭代遍历引用类型时，底层的数据不会被复制：&lt;/p&gt;
+&lt;h3 id=&#34;2-使用range迭代遍历引用类型时底层的数据不会被复制&#34;&gt;2. 使用range迭代遍历引用类型时，底层的数据不会被复制：&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func main() {
-	a := []int{1, 2, 3} // 改成slice
-	for i, v := range a {
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // [1 200 300]
-		}
-		a[i] = v + 100
-	}
-	fmt.Println(a) // 输出[101 300 400]
+    a := []int{1, 2, 3} // 改成slice
+    for i, v := range a {
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // [1 200 300]
+        }
+        a[i] = v + 100
+    }
+    fmt.Println(a) // 输出[101 300 400]
 }
 
 &lt;/code&gt;&lt;/pre&gt;

@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://miodawn.github.io</id>
     <title>测试</title>
-    <updated>2020-08-19T05:10:52.004Z</updated>
+    <updated>2020-08-19T05:26:18.354Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://miodawn.github.io"/>
     <link rel="self" href="https://miodawn.github.io/atom.xml"/>
@@ -16,46 +16,44 @@
         <link href="https://miodawn.github.io/post/golang-zhong-range-de-keng/">
         </link>
         <updated>2020-08-19T04:25:55.000Z</updated>
-        <content type="html"><![CDATA[<h3 id="1-range迭代遍历数组">1. range迭代遍历数组</h3>
-<p>会复制对象，而不是不是直接在原对象上操作。</p>
+        <content type="html"><![CDATA[<h3 id="1-range会复制对象而不是不是直接在原对象上操作">1. range会复制对象，而不是不是直接在原对象上操作。</h3>
 <p>示例一：</p>
 <pre><code class="language-go">func main() {
-	a := [3]int{1, 2, 3}
-	for _, v := range a { // 复制一份a遍历[1, 2, 3]
-		v += 100 // v是复制对象中的值，不会改变a数组元素的值
-	}
-	fmt.Println(a) // 1 2 3
+    a := [3]int{1, 2, 3}
+    for _, v := range a { // 复制一份a遍历[1, 2, 3]
+        v += 100 // v是复制对象中的值，不会改变a数组元素的值
+    }
+    fmt.Println(a) // 1 2 3
 }
 </code></pre>
 <p>示例二：</p>
 <pre><code class="language-go">func main() {
-	a := [3]int{1, 2, 3}
-	for i, v := range a { // i,v从a复制的对象里提取出
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // 输出[1 200 300]
-		}
-		a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
-	}
-	fmt.Println(a) // 输出[101, 102, 103]
+    a := [3]int{1, 2, 3}
+    for i, v := range a { // i,v从a复制的对象里提取出
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // 输出[1 200 300]
+        }
+        a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
+    }
+    fmt.Println(a) // 输出[101, 102, 103]
 }
 </code></pre>
 <p>结果：</p>
 <pre><code class="language-powershell">[1 200 300]
 [101 102 103]
 </code></pre>
-<h3 id="2-range迭代遍历切片">2. range迭代遍历切片</h3>
-<p>迭代遍历引用类型时，底层的数据不会被复制：</p>
+<h3 id="2-使用range迭代遍历引用类型时底层的数据不会被复制">2. 使用range迭代遍历引用类型时，底层的数据不会被复制：</h3>
 <pre><code class="language-go">func main() {
-	a := []int{1, 2, 3} // 改成slice
-	for i, v := range a {
-		if i == 0 {
-			a[1], a[2] = 200, 300
-			fmt.Println(a) // [1 200 300]
-		}
-		a[i] = v + 100
-	}
-	fmt.Println(a) // 输出[101 300 400]
+    a := []int{1, 2, 3} // 改成slice
+    for i, v := range a {
+        if i == 0 {
+            a[1], a[2] = 200, 300
+            fmt.Println(a) // [1 200 300]
+        }
+        a[i] = v + 100
+    }
+    fmt.Println(a) // 输出[101 300 400]
 }
 
 </code></pre>
