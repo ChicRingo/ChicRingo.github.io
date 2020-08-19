@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://miodawn.github.io</id>
     <title>测试</title>
-    <updated>2020-08-19T05:09:44.566Z</updated>
+    <updated>2020-08-19T05:10:52.004Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://miodawn.github.io"/>
     <link rel="self" href="https://miodawn.github.io/atom.xml"/>
@@ -12,8 +12,8 @@
     <rights>All rights reserved 2020, 测试</rights>
     <entry>
         <title type="html"><![CDATA[Golang 中 range 的坑]]></title>
-        <id>https://miodawn.github.io/post/golang-zhong-range-de-shi-yong-fang-fa-ji-zhu-yi-shi-xiang/</id>
-        <link href="https://miodawn.github.io/post/golang-zhong-range-de-shi-yong-fang-fa-ji-zhu-yi-shi-xiang/">
+        <id>https://miodawn.github.io/post/golang-zhong-range-de-keng/</id>
+        <link href="https://miodawn.github.io/post/golang-zhong-range-de-keng/">
         </link>
         <updated>2020-08-19T04:25:55.000Z</updated>
         <content type="html"><![CDATA[<h3 id="1-range迭代遍历数组">1. range迭代遍历数组</h3>
