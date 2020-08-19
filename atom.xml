@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-19T11:23:29.986Z</updated>
+    <updated>2020-08-19T11:38:55.326Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -16,11 +16,11 @@
         <link href="https://ChicRingo.github.io/post/golang-zhong-ling-zhi-de-keng/">
         </link>
         <updated>2020-08-19T11:13:43.000Z</updated>
-        <summary type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在某些字段使用这些值作为参数时，GORM不会把这些字段得值插入数据库中</p>
+        <summary type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
 ]]></summary>
-        <content type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在某些字段使用这些值作为参数时，GORM不会把这些字段得值插入数据库中</p>
+        <content type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
 <!-- more -->
-<h3 id="默认值">默认值</h3>
+<h2 id="默认值">默认值</h2>
 <p>可以通过 tag 定义字段的默认值，比如：</p>
 <pre><code class="language-go">type User struct {
   ID   int64
@@ -35,7 +35,7 @@ db.Create(&amp;user)
 </code></pre>
 <p>上面代码实际执行的SQL语句是<code>INSERT INTO users(&quot;age&quot;) values('99');</code>，排除了零值字段<code>Name</code>，而在数据库中这一条数据会使用设置的默认值<code>小王子</code>作为Name字段的值。</p>
 <p>**注意：**所有字段的零值, 比如<code>0</code>, <code>&quot;&quot;</code>,<code>false</code>或者其它<code>零值</code>，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 <code>Scanner/Valuer</code>接口，比如：</p>
-<h4 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h4>
+<h3 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h3>
 <pre><code class="language-go">// 使用指针
 type User struct {
   ID   int64
@@ -45,7 +45,7 @@ type User struct {
 user := User{Name: new(string), Age: 18))}
 db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
 </code></pre>
-<h4 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h4>
+<h3 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h3>
 <pre><code class="language-go">// 使用 Scanner/Valuer
 type User struct {
 	ID int64

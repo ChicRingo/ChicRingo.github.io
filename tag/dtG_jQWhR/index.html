@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597836205685">
+<link rel="shortcut icon" href="/favicon.ico?v=1597837120387">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -1027,9 +1027,9 @@
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-zhong-ling-zhi-de-keng/"" data-c="
-          &lt;p&gt;对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , &#39;&#39; ,false，所以在某些字段使用这些值作为参数时，GORM不会把这些字段得值插入数据库中&lt;/p&gt;
+          &lt;p&gt;对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , &#39;&#39; ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。&lt;/p&gt;
 &lt;!-- more --&gt;
-&lt;h3 id=&#34;默认值&#34;&gt;默认值&lt;/h3&gt;
+&lt;h2 id=&#34;默认值&#34;&gt;默认值&lt;/h2&gt;
 &lt;p&gt;可以通过 tag 定义字段的默认值，比如：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type User struct {
   ID   int64
@@ -1044,7 +1044,7 @@ db.Create(&amp;amp;user)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;上面代码实际执行的SQL语句是&lt;code&gt;INSERT INTO users(&amp;quot;age&amp;quot;) values(&#39;99&#39;);&lt;/code&gt;，排除了零值字段&lt;code&gt;Name&lt;/code&gt;，而在数据库中这一条数据会使用设置的默认值&lt;code&gt;小王子&lt;/code&gt;作为Name字段的值。&lt;/p&gt;
 &lt;p&gt;**注意：**所有字段的零值, 比如&lt;code&gt;0&lt;/code&gt;, &lt;code&gt;&amp;quot;&amp;quot;&lt;/code&gt;,&lt;code&gt;false&lt;/code&gt;或者其它&lt;code&gt;零值&lt;/code&gt;，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 &lt;code&gt;Scanner/Valuer&lt;/code&gt;接口，比如：&lt;/p&gt;
-&lt;h4 id=&#34;使用指针方式实现零值存入数据库&#34;&gt;使用指针方式实现零值存入数据库&lt;/h4&gt;
+&lt;h3 id=&#34;使用指针方式实现零值存入数据库&#34;&gt;使用指针方式实现零值存入数据库&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// 使用指针
 type User struct {
   ID   int64
@@ -1054,7 +1054,7 @@ type User struct {
 user := User{Name: new(string), Age: 18))}
 db.Create(&amp;amp;user)  // 此时数据库中该条记录name字段的值就是&#39;&#39;
 &lt;/code&gt;&lt;/pre&gt;
-&lt;h4 id=&#34;使用scannervaluer接口方式实现零值存入数据库&#34;&gt;使用Scanner/Valuer接口方式实现零值存入数据库&lt;/h4&gt;
+&lt;h3 id=&#34;使用scannervaluer接口方式实现零值存入数据库&#34;&gt;使用Scanner/Valuer接口方式实现零值存入数据库&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// 使用 Scanner/Valuer
 type User struct {
 	ID int64

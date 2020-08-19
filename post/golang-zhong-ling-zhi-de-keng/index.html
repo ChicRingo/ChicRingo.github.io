@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中零值的坑 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597836205685">
+<link rel="shortcut icon" href="/favicon.ico?v=1597837120387">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -230,14 +230,10 @@
     <ul class="markdownIt-TOC">
 <li>
 <ul>
-<li>
-<ul>
 <li><a href="#%E9%BB%98%E8%AE%A4%E5%80%BC">默认值</a>
 <ul>
 <li><a href="#%E4%BD%BF%E7%94%A8%E6%8C%87%E9%92%88%E6%96%B9%E5%BC%8F%E5%AE%9E%E7%8E%B0%E9%9B%B6%E5%80%BC%E5%AD%98%E5%85%A5%E6%95%B0%E6%8D%AE%E5%BA%93">使用指针方式实现零值存入数据库</a></li>
 <li><a href="#%E4%BD%BF%E7%94%A8scannervaluer%E6%8E%A5%E5%8F%A3%E6%96%B9%E5%BC%8F%E5%AE%9E%E7%8E%B0%E9%9B%B6%E5%80%BC%E5%AD%98%E5%85%A5%E6%95%B0%E6%8D%AE%E5%BA%93">使用Scanner/Valuer接口方式实现零值存入数据库</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -546,15 +542,15 @@
     <span class="meta-item">
       <span class="post-meta-divider">|</span>
       <i class="fa fa-file-word-o"></i>
-      <span>453<span class="pc-show language" data-lan="words">字数</span></span>
+      <span>481<span class="pc-show language" data-lan="words">字数</span></span>
     </span>
     
   </div>
 </section>
             <div class="post-body next-md-body" id="post_body">
-              <p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在某些字段使用这些值作为参数时，GORM不会把这些字段得值插入数据库中</p>
+              <p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
 <!-- more -->
-<h3 id="默认值">默认值</h3>
+<h2 id="默认值">默认值</h2>
 <p>可以通过 tag 定义字段的默认值，比如：</p>
 <pre><code class="language-go">type User struct {
   ID   int64
@@ -569,7 +565,7 @@ db.Create(&amp;user)
 </code></pre>
 <p>上面代码实际执行的SQL语句是<code>INSERT INTO users(&quot;age&quot;) values('99');</code>，排除了零值字段<code>Name</code>，而在数据库中这一条数据会使用设置的默认值<code>小王子</code>作为Name字段的值。</p>
 <p>**注意：**所有字段的零值, 比如<code>0</code>, <code>&quot;&quot;</code>,<code>false</code>或者其它<code>零值</code>，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 <code>Scanner/Valuer</code>接口，比如：</p>
-<h4 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h4>
+<h3 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h3>
 <pre><code class="language-go">// 使用指针
 type User struct {
   ID   int64
@@ -579,7 +575,7 @@ type User struct {
 user := User{Name: new(string), Age: 18))}
 db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
 </code></pre>
-<h4 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h4>
+<h3 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h3>
 <pre><code class="language-go">// 使用 Scanner/Valuer
 type User struct {
 	ID int64
@@ -1600,9 +1596,9 @@ db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-zhong-ling-zhi-de-keng/"" data-c="
-          &lt;p&gt;对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , &#39;&#39; ,false，所以在某些字段使用这些值作为参数时，GORM不会把这些字段得值插入数据库中&lt;/p&gt;
+          &lt;p&gt;对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , &#39;&#39; ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。&lt;/p&gt;
 &lt;!-- more --&gt;
-&lt;h3 id=&#34;默认值&#34;&gt;默认值&lt;/h3&gt;
+&lt;h2 id=&#34;默认值&#34;&gt;默认值&lt;/h2&gt;
 &lt;p&gt;可以通过 tag 定义字段的默认值，比如：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;type User struct {
   ID   int64
@@ -1617,7 +1613,7 @@ db.Create(&amp;amp;user)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;上面代码实际执行的SQL语句是&lt;code&gt;INSERT INTO users(&amp;quot;age&amp;quot;) values(&#39;99&#39;);&lt;/code&gt;，排除了零值字段&lt;code&gt;Name&lt;/code&gt;，而在数据库中这一条数据会使用设置的默认值&lt;code&gt;小王子&lt;/code&gt;作为Name字段的值。&lt;/p&gt;
 &lt;p&gt;**注意：**所有字段的零值, 比如&lt;code&gt;0&lt;/code&gt;, &lt;code&gt;&amp;quot;&amp;quot;&lt;/code&gt;,&lt;code&gt;false&lt;/code&gt;或者其它&lt;code&gt;零值&lt;/code&gt;，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 &lt;code&gt;Scanner/Valuer&lt;/code&gt;接口，比如：&lt;/p&gt;
-&lt;h4 id=&#34;使用指针方式实现零值存入数据库&#34;&gt;使用指针方式实现零值存入数据库&lt;/h4&gt;
+&lt;h3 id=&#34;使用指针方式实现零值存入数据库&#34;&gt;使用指针方式实现零值存入数据库&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// 使用指针
 type User struct {
   ID   int64
@@ -1627,7 +1623,7 @@ type User struct {
 user := User{Name: new(string), Age: 18))}
 db.Create(&amp;amp;user)  // 此时数据库中该条记录name字段的值就是&#39;&#39;
 &lt;/code&gt;&lt;/pre&gt;
-&lt;h4 id=&#34;使用scannervaluer接口方式实现零值存入数据库&#34;&gt;使用Scanner/Valuer接口方式实现零值存入数据库&lt;/h4&gt;
+&lt;h3 id=&#34;使用scannervaluer接口方式实现零值存入数据库&#34;&gt;使用Scanner/Valuer接口方式实现零值存入数据库&lt;/h3&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;// 使用 Scanner/Valuer
 type User struct {
 	ID int64
