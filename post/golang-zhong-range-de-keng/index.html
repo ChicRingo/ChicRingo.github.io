@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中 range 的坑 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597821691297">
+<link rel="shortcut icon" href="/favicon.ico?v=1597824204395">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -617,8 +617,8 @@
     </div>
     <div class="nav-next">
       
-        <a class="nav-pc-next" title="Go的goroutine为什么快" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/">Go的goroutine为什么快</a>
-        <a class="nav-mobile-next" title="Go的goroutine为什么快" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/">下一篇</a>
+        <a class="nav-pc-next" title="Go的goroutine为什么“快”" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/">Go的goroutine为什么“快”</a>
+        <a class="nav-mobile-next" title="Go的goroutine为什么“快”" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/">下一篇</a>
         <i class="fa fa-chevron-right"></i>
       
     </div>
@@ -1650,25 +1650,120 @@
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/"" data-c="
-          &lt;p&gt;👏  欢迎使用 &lt;strong&gt;Gridea&lt;/strong&gt; ！&lt;br&gt;
-✍️  &lt;strong&gt;Gridea&lt;/strong&gt; 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意&lt;/p&gt;
+          &lt;blockquote&gt;
+&lt;p&gt;本文主要介绍了 Go 程序为了实现极高的并发性能，其内部调度器的实现架构（G-P-M 模型），以及为了最大限度利用计算资源，Go 调度器是如何处理线程阻塞的场景&lt;/p&gt;
+&lt;/blockquote&gt;
 &lt;!-- more --&gt;
-&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://ChicRingo.github.io/post-images/1597805468950.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
-&lt;p&gt;示例一：&lt;/p&gt;
-&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
-
-import &amp;quot;fmt&amp;quot;
-
-func main() {
-	a := [3]int{1, 2, 3}
-	for _, v := range a { // 复制一份a遍历[1, 2, 3]
-		v += 100 // v是复制对象中的值，不会改变a数组元素的值
-	}
-	fmt.Println(a) // 1 2 3
-}
-
-&lt;/code&gt;&lt;/pre&gt;
-">Go的goroutine为什么快</a>
+&lt;h2 id=&#34;怎么让我们的系统更快&#34;&gt;&lt;strong&gt;怎么让我们的系统更快&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;随着信息技术的迅速发展，单台服务器处理能力越来越强，迫使编程模式由从前的串行模式升级到并发模型。&lt;/p&gt;
+&lt;p&gt;并发模型包含 IO 多路复用、多进程以及多线程，这几种模型都各有优劣，现代复杂的高并发架构大多是几种模型协同使用，不同场景应用不同模型，扬长避短，发挥服务器的最大性能。&lt;/p&gt;
+&lt;p&gt;而&lt;strong&gt;多线程，因为其轻量和易用&lt;/strong&gt;，成为并发编程中使用频率最高的并发模型，包括后衍生的协程等其他子产品，也都基于它。&lt;/p&gt;
+&lt;h2 id=&#34;并发-并行&#34;&gt;&lt;strong&gt;并发 ≠ 并行&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;并发 (concurrency) 和 并行 ( parallelism) 是不同的。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;在单个 CPU 核上，线程通过时间片或者让出控制权来实现任务切换，达到 &amp;quot;同时&amp;quot; 运行多个任务的目的，这就是所谓的并发。但实际上任何时刻都只有一个任务被执行，其他任务通过某种算法来排队。&lt;/p&gt;
+&lt;p&gt;多核 CPU 可以让同一进程内的 &amp;quot;多个线程&amp;quot; 做到真正意义上的同时运行，这才是并行。&lt;/p&gt;
+&lt;h2 id=&#34;进程-线程-协程&#34;&gt;&lt;strong&gt;进程、线程、协程&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;进程：进程是系统进行资源分配的基本单位，有独立的内存空间。&lt;/p&gt;
+&lt;p&gt;线程：线程是 CPU 调度和分派的基本单位，线程依附于进程存在，每个线程会共享父进程的资源。&lt;/p&gt;
+&lt;p&gt;协程：**协程是一种用户态的轻量级线程，**协程的调度完全由用户控制，协程间切换只需要保存任务的上下文，没有内核的开销。&lt;/p&gt;
+&lt;h2 id=&#34;线程上下文切换&#34;&gt;&lt;strong&gt;线程上下文切换&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;由于中断处理，多任务处理，用户态切换等原因会导致 CPU 从一个线程切换到另一个线程，切换过程需要保存当前进程的状态并恢复另一个进程的状态。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;上下文切换的代价是高昂的&lt;/strong&gt;，因为在核心上交换线程会花费很多时间。上下文切换的延迟取决于不同的因素，大概在在 50 到 100 纳秒之间。考虑到硬件平均在每个核心上每纳秒执行 12 条指令，那么一次上下文切换可能会花费 600 到 1200 条指令的延迟时间。实际上，上下文切换占用了大量程序执行指令的时间。&lt;/p&gt;
+&lt;p&gt;如果存在&lt;strong&gt;跨核上下文切换&lt;/strong&gt;（Cross-Core Context Switch），可能会导致 CPU 缓存失效（CPU 从缓存访问数据的成本大约 3 到 40 个时钟周期，从主存访问数据的成本大约 100 到 300 个时钟周期），这种场景的切换成本会更加昂贵。&lt;/p&gt;
+&lt;h2 id=&#34;golang-为并发而生&#34;&gt;&lt;strong&gt;Golang 为并发而生&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Golang 从 2009 年正式发布以来，依靠其极高运行速度和高效的开发效率，迅速占据市场份额。Golang 从语言级别支持并发，通过轻量级协程 Goroutine 来实现程序并发运行。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Goroutine 非常轻量&lt;/strong&gt;，主要体现在以下两个方面：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;上下文切换代价小：&lt;/strong&gt; Goroutine 上下文切换只涉及到三个寄存器（PC / SP / DX）的值修改；而对比线程的上下文切换则需要涉及模式切换（从用户态切换到内核态）、以及 16 个寄存器、PC、SP…等寄存器的刷新；&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;内存占用少：&lt;/strong&gt; 线程栈空间通常是 2M，Goroutine 栈空间最小 2K；&lt;/p&gt;
+&lt;p&gt;Golang 程序中可以轻松支持&lt;strong&gt;10w 级别&lt;/strong&gt;的 Goroutine 运行，而线程数量达到 1k 时，内存占用就已经达到 2G。&lt;/p&gt;
+&lt;h2 id=&#34;go-调度器实现机制&#34;&gt;&lt;strong&gt;Go 调度器实现机制：&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Go 程序通过调度器来调度**Goroutine 在内核线程上执行，**但是 G&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;em&gt;Goroutine&lt;/em&gt;并不直接绑定 OS 线程 M - &lt;em&gt;Machine&lt;/em&gt;运行，而是由 Goroutine Scheduler 中的 P - &lt;em&gt;Processor&lt;/em&gt; （逻辑处理器）来作获取内核线程资源的『中介』。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Go 调度器模型我们通常叫做&lt;strong&gt;G-P-M 模型&lt;/strong&gt;，他包括 4 个重要结构，分别是&lt;strong&gt;G、P、M、Sched：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;**G:Goroutine，**每个 Goroutine 对应一个 G 结构体，G 存储 Goroutine 的运行堆栈、状态以及任务函数，可重用。&lt;/p&gt;
+&lt;p&gt;G 并非执行体，每个 G 需要绑定到 P 才能被调度执行。&lt;/p&gt;
+&lt;p&gt;**P: Processor，**表示逻辑处理器，对 G 来说，P 相当于 CPU 核，G 只有绑定到 P 才能被调度。对 M 来说，P 提供了相关的执行环境(Context)，如内存分配状态(mcache)，任务队列(G)等。&lt;/p&gt;
+&lt;p&gt;P 的数量决定了系统内最大可并行的 G 的数量（前提：物理 CPU 核数 &amp;gt;= P 的数量）。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;P 的数量由用户设置的 GoMAXPROCS 决定，但是不论 GoMAXPROCS 设置为多大，P 的数量最大为 256。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;**M: Machine，**OS 内核线程抽象，代表着真正执行计算的资源，在绑定有效的 P 后，进入 schedule 循环；而 schedule 循环的机制大致是从 Global 队列、P 的 Local 队列以及 wait 队列中获取。&lt;/p&gt;
+&lt;p&gt;**M 的数量是不定的，由 Go Runtime 调整，**为了防止创建过多 OS 线程导致系统调度不过来，目前默认最大限制为 10000 个。&lt;/p&gt;
+&lt;p&gt;M 并不保留 G 状态，这是 G 可以跨 M 调度的基础。&lt;/p&gt;
+&lt;p&gt;**Sched：Go 调度器，**它维护有存储 M 和 G 的队列以及调度器的一些状态信息等。&lt;/p&gt;
+&lt;p&gt;调度器循环的机制大致是从各种队列、P 的本地队列中获取 G，切换到 G 的执行栈上并执行 G 的函数，调用 Goexit 做清理工作并回到 M，如此反复。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;理解 M、P、G 三者的关系，可以通过经典的地鼠推车搬砖的模型来说明其三者关系：&lt;/strong&gt;&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://pic3.zhimg.com/80/v2-a27259141ff915578ab5165d75432930_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;&lt;strong&gt;地鼠(Gopher)的工作任务是：&lt;strong&gt;工地上有若干砖头，地鼠&lt;/strong&gt;借助小车&lt;/strong&gt;把砖头运送到火种上去烧制。&lt;strong&gt;M 就可以看作图中的地鼠，P 就是小车，G 就是小车里装的砖。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;弄清楚了它们三者的关系，下面我们就开始重点聊地鼠是如何在搬运砖块的。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Processor（P）：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;根据用户设置的 **GoMAXPROCS **值来创建一批小车(P)。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Goroutine(G)：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;通过 Go 关键字就是用来创建一个 Goroutine，也就相当于制造一块砖(G)，然后将这块砖(G)放入当前这辆小车(P)中。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Machine (M)：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;地鼠(M)不能通过外部创建出来，只能砖(G)太多了，地鼠(M)又太少了，实在忙不过来，&lt;strong&gt;刚好还有空闲的小车(P)没有使用&lt;/strong&gt;，那就从别处再借些地鼠(M)过来直到把小车(P)用完为止。&lt;/p&gt;
+&lt;p&gt;这里有一个地鼠(M)不够用，从别处借地鼠(M)的过程，这个过程就是创建一个内核线程(M)。&lt;/p&gt;
+&lt;p&gt;**需要注意的是：**地鼠(M) 如果没有小车(P)是没办法运砖的，&lt;strong&gt;小车(P)的数量决定了能够干活的地鼠(M)数量&lt;/strong&gt;，在 Go 程序里面对应的是活动线程数；&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;在 Go 程序里我们通过下面的图示来展示 G-P-M 模型：&lt;/strong&gt;&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;2&#34;&gt;&lt;img src=&#34;https://pic2.zhimg.com/80/v2-a39b9615c2a4dc7fc3a5af9ff93da828_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;P 代表可以“并行”运行的逻辑处理器，每个 P 都被分配到一个系统线程 M，G 代表 Go 协程。&lt;/p&gt;
+&lt;p&gt;Go 调度器中有两个不同的运行队列：&lt;strong&gt;全局运行队列(GRQ)和本地运行队列(LRQ)。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;每个 P 都有一个 LRQ，用于管理分配给在 P 的上下文中执行的 Goroutines，这些 Goroutine 轮流被和 P 绑定的 M 进行上下文切换。GRQ 适用于尚未分配给 P 的 Goroutines。&lt;/p&gt;
+&lt;p&gt;**从上图可以看出，G 的数量可以远远大于 M 的数量，换句话说，Go 程序可以利用少量的内核级线程来支撑大量 Goroutine 的并发。**多个 Goroutine 通过用户级别的上下文切换来共享内核线程 M 的计算资源，但对于操作系统来说并没有线程上下文切换产生的性能损耗。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;为了更加充分利用线程的计算资源，Go 调度器采取了以下几种调度策略：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;任务窃取（work-stealing）&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;我们知道，现实情况有的 Goroutine 运行的快，有的慢，那么势必肯定会带来的问题就是，忙的忙死，闲的闲死，Go 肯定不允许摸鱼的 P 存在，势必要充分利用好计算资源。&lt;/p&gt;
+&lt;p&gt;为了提高 Go 并行处理能力，调高整体处理效率，当每个 P 之间的 G 任务不均衡时，调度器允许从 GRQ，或者其他 P 的 LRQ 中获取 G 执行。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;减少阻塞&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;如果正在执行的 Goroutine 阻塞了线程 M 怎么办？P 上 LRQ 中的 Goroutine 会获取不到调度么？&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;在 Go 里面阻塞主要分为一下 4 种场景：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;场景 1：由于原子、互斥量或通道操作调用导致 Goroutine 阻塞&lt;/strong&gt;，调度器将把当前阻塞的 Goroutine 切换出去，重新调度 LRQ 上的其他 Goroutine；&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;场景 2：由于网络请求和 IO 操作导致 Goroutine 阻塞&lt;/strong&gt;，这种阻塞的情况下，我们的 G 和 M 又会怎么做呢？&lt;/p&gt;
+&lt;p&gt;Go 程序提供了**网络轮询器（NetPoller）**来处理网络请求和 IO 操作的问题，其后台通过 kqueue（MacOS），epoll（Linux）或 iocp（Windows）来实现 IO 多路复用。&lt;/p&gt;
+&lt;p&gt;通过使用 NetPoller 进行网络系统调用，调度器可以防止 Goroutine 在进行这些系统调用时阻塞 M。这可以让 M 执行 P 的 LRQ 中其他的 Goroutines，而不需要创建新的 M。有助于减少操作系统上的调度负载。&lt;/p&gt;
+&lt;p&gt;**下图展示它的工作原理：**G1 正在 M 上执行，还有 3 个 Goroutine 在 LRQ 上等待执行。网络轮询器空闲着，什么都没干。&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;3&#34;&gt;&lt;img src=&#34;https://pic3.zhimg.com/80/v2-b89070ec76ea9aaf4a3b8107e8f1fe84_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;接下来，G1 想要进行网络系统调用，因此它被移动到网络轮询器并且处理异步网络系统调用。然后，M 可以从&lt;br&gt;
+LRQ 执行另外的 Goroutine。此时，G2 就被上下文切换到 M 上了。&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;4&#34;&gt;&lt;img src=&#34;https://pic2.zhimg.com/80/v2-62455d37b17ddfe216aa596338cf5e2a_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;最后，异步网络系统调用由网络轮询器完成，G1 被移回到 P 的 LRQ 中。一旦 G1 可以在 M 上进行上下文切换，它负责的 Go 相关代码就可以再次执行。这里的最大优势是，执行网络系统调用不需要额外的 M。网络轮询器使用系统线程，它时刻处理一个有效的事件循环。&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;5&#34;&gt;&lt;img src=&#34;https://pic3.zhimg.com/80/v2-c9237c70726b41ca722e0b4bf883b553_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;这种调用方式看起来很复杂，值得庆幸的是，&lt;strong&gt;Go 语言将该“复杂性”隐藏在 Runtime 中&lt;/strong&gt;：Go 开发者无需关注 socket 是否是 non-block 的，也无需亲自注册文件描述符的回调，只需在每个连接对应的 Goroutine 中以“block I/O”的方式对待 socket 处理即可，&lt;strong&gt;实现了 goroutine-per-connection 简单的网络编程模式&lt;/strong&gt;（但是大量的 Goroutine 也会带来额外的问题，比如栈内存增加和调度器负担加重）。&lt;/p&gt;
+&lt;p&gt;用户层眼中看到的 Goroutine 中的“block socket”，实际上是通过 Go runtime 中的 netpoller 通过 Non-block socket +&lt;br&gt;
+I/O 多路复用机制“模拟”出来的。Go 中的 net 库正是按照这方式实现的。&lt;/p&gt;
+&lt;p&gt;**场景 3：**当调用一些系统方法的时候，如果系统方法调用的时候发生阻塞，这种情况下，网络轮询器（NetPoller）无法使用，而进行系统调用的 Goroutine 将阻塞当前 M。&lt;/p&gt;
+&lt;p&gt;让我们来看看同步系统调用（如文件 I/O）会导致 M 阻塞的情况：G1 将进行同步系统调用以阻塞 M1。&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;6&#34;&gt;&lt;img src=&#34;https://picb.zhimg.com/80/v2-bc3e58a8f34c24c0229a4add669a3e52_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;调度器介入后：识别出 G1 已导致 M1 阻塞，此时，调度器将 M1 与 P 分离，同时也将 G1 带走。然后调度器引入新的 M2 来服务 P。此时，可以从 LRQ 中选择 G2 并在 M2 上进行上下文切换。&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;7&#34;&gt;&lt;img src=&#34;https://picb.zhimg.com/80/v2-9875a8b04b3653e0da8e0794dea7035e_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;阻塞的系统调用完成后：G1 可以移回 LRQ 并再次由 P 执行。如果这种情况再次发生，M1 将被放在旁边以备将来重复使用**。**&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;8&#34;&gt;&lt;img src=&#34;https://picb.zhimg.com/80/v2-c0398b611bfcbe16309882a9a59c39d7_1440w.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;**场景 4：**如果在 Goroutine 去执行一个 sleep 操作，导致 M 被阻塞了。&lt;/p&gt;
+&lt;p&gt;Go 程序后台有一个监控线程 sysmon，它监控那些长时间运行的 G 任务然后设置可以强占的标识符，别的 Goroutine 就可以抢先进来执行。&lt;/p&gt;
+&lt;p&gt;只要下次这个 Goroutine 进行函数调用，那么就会被强占，同时也会保护现场，然后重新放入 P 的本地队列里面等待下次执行。&lt;/p&gt;
+&lt;h2 id=&#34;小结&#34;&gt;&lt;strong&gt;小结&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;本文主要从 Go 调度器架构层面上介绍了 G-P-M 模型，通过该模型怎样实现少量内核线程支撑大量 Goroutine 的并发运行。以及通过 NetPoller、sysmon 等帮助 Go 程序减少线程阻塞，充分利用已有的计算资源，从而最大限度提高 Go 程序的运行效率。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;参考文档：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.ardanlabs.com/blog/2018/08/scheduling-in-go-part1.html&#34;&gt;https://www.ardanlabs.com/blog/2018/08/scheduling-in-go-part1.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.ardanlabs.com/blog/2018/08/scheduling-in-go-part2.html&#34;&gt;https://www.ardanlabs.com/blog/2018/08/scheduling-in-go-part2.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.ardanlabs.com/blog/2018/12/scheduling-in-go-part3.html&#34;&gt;https://www.ardanlabs.com/blog/2018/12/scheduling-in-go-part3.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//segmentfault.com/a/1190000016038785&#34;&gt;https://segmentfault.com/a/1190000016038785&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//segmentfault.com/a/1190000016611742&#34;&gt;https://segmentfault.com/a/1190000016611742&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//segmentfault.com/a/1190000017333717&#34;&gt;https://segmentfault.com/a/1190000017333717&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//segmentfault.com/a/1190000015352983&#34;&gt;https://segmentfault.com/a/1190000015352983&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//segmentfault.com/a/1190000015464889&#34;&gt;https://segmentfault.com/a/1190000015464889&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.cnblogs.com/lxmhhy/p/6041001.html&#34;&gt;https://www.cnblogs.com/lxmhhy/p/6041001.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.cnblogs.com/mokafamily/p/9975980.html&#34;&gt;https://www.cnblogs.com/mokafamily/p/9975980.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//studyGolang.com/articles/9211&#34;&gt;https://studyGolang.com/articles/9211&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;https://www.zhihu.com/question/20862617&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//codeburst.io/why-Goroutines-are-not-lightweight-threads-7c460c1f155f&#34;&gt;https://codeburst.io/why-Goroutines-are-not-lightweight-threads-7c460c1f155f&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//blog.csdn.net/tiandyoin/article/details/76556702&#34;&gt;https://blog.csdn.net/tiandyoin/article/details/76556702&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.jianshu.com/p/cc3c0fefee43&#34;&gt;https://www.jianshu.com/p/cc3c0fefee43&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.jianshu.com/p/a315224886d2&#34;&gt;https://www.jianshu.com/p/a315224886d2&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;作者： joellwang，腾讯 CSIG 后台开发工程师&lt;/p&gt;
+&lt;p&gt;更多精彩，尽在 &lt;a href=&#34;https://www.zhihu.com/org/teng-xun-ji-zhu-gong-cheng&#34;&gt;腾讯技术&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;转自&lt;a href=&#34;https://zhuanlan.zhihu.com/p/111346689&#34;&gt;知乎：Go为什么这么“快”&lt;/a&gt;&lt;/p&gt;
+">Go的goroutine为什么“快”</a>
       </div>
       
       <div class="item">
