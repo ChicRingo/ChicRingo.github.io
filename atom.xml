@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://miodawn.github.io</id>
-    <title>测试</title>
-    <updated>2020-08-19T05:26:18.354Z</updated>
+    <id>https://ChicRingo.github.io</id>
+    <title>ChicRingo个人博客</title>
+    <updated>2020-08-19T07:03:49.147Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://miodawn.github.io"/>
-    <link rel="self" href="https://miodawn.github.io/atom.xml"/>
+    <link rel="alternate" href="https://ChicRingo.github.io"/>
+    <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
     <subtitle>温故而知新</subtitle>
-    <logo>https://miodawn.github.io/images/avatar.png</logo>
-    <icon>https://miodawn.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, 测试</rights>
+    <logo>https://ChicRingo.github.io/images/avatar.png</logo>
+    <icon>https://ChicRingo.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2020, ChicRingo个人博客</rights>
     <entry>
         <title type="html"><![CDATA[Golang 中 range 的坑]]></title>
-        <id>https://miodawn.github.io/post/golang-zhong-range-de-keng/</id>
-        <link href="https://miodawn.github.io/post/golang-zhong-range-de-keng/">
+        <id>https://ChicRingo.github.io/post/golang-zhong-range-de-keng/</id>
+        <link href="https://ChicRingo.github.io/post/golang-zhong-range-de-keng/">
         </link>
         <updated>2020-08-19T04:25:55.000Z</updated>
-        <content type="html"><![CDATA[<h3 id="1-range会复制对象而不是不是直接在原对象上操作">1. range会复制对象，而不是不是直接在原对象上操作。</h3>
+        <content type="html"><![CDATA[<h2 id="使用-range-迭代遍历数组">使用 range 迭代遍历数组</h2>
+<p>range 会复制对象，而不是不是直接在原对象上操作。</p>
 <p>示例一：</p>
 <pre><code class="language-go">func main() {
     a := [3]int{1, 2, 3}
@@ -43,7 +44,8 @@
 <pre><code class="language-powershell">[1 200 300]
 [101 102 103]
 </code></pre>
-<h3 id="2-使用range迭代遍历引用类型时底层的数据不会被复制">2. 使用range迭代遍历引用类型时，底层的数据不会被复制：</h3>
+<h2 id="使用-range-迭代遍历切片">使用 range 迭代遍历切片</h2>
+<p>range迭代遍历引用类型时，底层的数据不会被复制：</p>
 <pre><code class="language-go">func main() {
     a := []int{1, 2, 3} // 改成slice
     for i, v := range a {
@@ -67,17 +69,31 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Go的goroutine为什么快]]></title>
-        <id>https://miodawn.github.io/post/go-de-goroutine-wei-shi-me-kuai/</id>
-        <link href="https://miodawn.github.io/post/go-de-goroutine-wei-shi-me-kuai/">
+        <id>https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/</id>
+        <link href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/">
         </link>
         <updated>2020-08-19T02:49:40.000Z</updated>
-        <content type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://miodawn.github.io/post-images/1597805468950.jpg" alt="" loading="lazy"></figure>
+        <content type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://ChicRingo.github.io/post-images/1597805468950.jpg" alt="" loading="lazy"></figure>
+<p>示例一：</p>
+<pre><code class="language-go">package main
+
+import &quot;fmt&quot;
+
+func main() {
+	a := [3]int{1, 2, 3}
+	for _, v := range a { // 复制一份a遍历[1, 2, 3]
+		v += 100 // v是复制对象中的值，不会改变a数组元素的值
+	}
+	fmt.Println(a) // 1 2 3
+}
+
+</code></pre>
 ]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[golang面试题，待更新]]></title>
-        <id>https://miodawn.github.io/post/golang-mian-shi-ti-dai-geng-xin/</id>
-        <link href="https://miodawn.github.io/post/golang-mian-shi-ti-dai-geng-xin/">
+        <id>https://ChicRingo.github.io/post/golang-mian-shi-ti-dai-geng-xin/</id>
+        <link href="https://ChicRingo.github.io/post/golang-mian-shi-ti-dai-geng-xin/">
         </link>
         <updated>2020-08-18T16:36:24.000Z</updated>
         <content type="html"><![CDATA[<ol>

@@ -5,18 +5,18 @@
   <meta charset="UTF-8" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="keywords" content="Gridea静态个人博客">
+<meta name="keywords" content="ChicRingo个人博客">
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
-<title>测试</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597814771998">
+<title>ChicRingo个人博客</title>
+<link rel="shortcut icon" href="/favicon.ico?v=1597820625464">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
   href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Rosario:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext"
   rel="stylesheet" type="text/css">
 
-<link href="/media/hljs/styles/androidstudio.css"
+<link href="/media/hljs/styles/default.css"
   rel="stylesheet">
 
 <link rel="stylesheet" href="/styles/main.css">
@@ -58,7 +58,7 @@
         <div class="site-title">
           
             <a href="/" class="brand">
-              <span>测试</span>
+              <span>ChicRingo个人博客</span>
             </a>  
           
         </div>
@@ -159,11 +159,11 @@
 <div class="sidebar-wrapper box-shadow-wrapper bg-color">
   <div class="sidebar-item">
     <img class="site-author-image right-motion" src="/images/avatar.png"/>
-    <p class="site-author-name">miodawn</p>
+    <p class="site-author-name">ChicRingo</p>
     
     <div class="site-description right-motion">
       
-        <p id="binft">咸鱼一条</p>
+        <p id="binft">一条咸鱼</p>
       
     </div>
     
@@ -190,13 +190,6 @@
     </div>
   </div>
   
-    
-      <div class="sidebar-item">
-        <span class="site-item-rss">
-            <i class="fa fa-rss"></i>
-            <a href="https://miodawn.github.io/atom.xml" target="_blank">RSS</a>
-        </span>
-      </div>
     
   
   
@@ -248,11 +241,11 @@
             <div class="friends-note">
               <p><strong class="language" data-lan="format">友链格式：</strong></p>
               <ul>
-                <li><span class="language" data-lan="site-name">网站名称：</span>测试</li>
-                <li><span class="language" data-lan="site-link">网站地址：</span><a href="https://miodawn.github.io" data-pjax-state="">https://miodawn.github.io</a></li>
+                <li><span class="language" data-lan="site-name">网站名称：</span>ChicRingo个人博客</li>
+                <li><span class="language" data-lan="site-link">网站地址：</span><a href="https://ChicRingo.github.io" data-pjax-state="">https://ChicRingo.github.io</a></li>
                 <li><span class="language" data-lan="site-desc">网站描述：</span>温故而知新</li>
                 <li><span class="language" data-lan="site-img">网站头像：</span>
-                  <a href="https://miodawn.github.io/images/avatar.png">https://miodawn.github.io/images/avatar.png</a>
+                  <a href="https://ChicRingo.github.io/images/avatar.png">https://ChicRingo.github.io/images/avatar.png</a>
                 </li>
               </ul>
             </div>
@@ -270,7 +263,7 @@
         href="https://github.com/hsxyhao/gridea-theme-next" target="_blank">HsxyHao</a>
     </div>
     <div class="poweredby">
-      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+      
     </div>
   </footer>
   
@@ -979,8 +972,9 @@
     <div class="result" id="result">
       
       <div class="item">
-        <a class="result-title" style="opacity: 0;" href="https://miodawn.github.io/post/golang-zhong-range-de-keng/"" data-c="
-          &lt;h3 id=&#34;1-range会复制对象而不是不是直接在原对象上操作&#34;&gt;1. range会复制对象，而不是不是直接在原对象上操作。&lt;/h3&gt;
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-zhong-range-de-keng/"" data-c="
+          &lt;h2 id=&#34;使用-range-迭代遍历数组&#34;&gt;使用 range 迭代遍历数组&lt;/h2&gt;
+&lt;p&gt;range 会复制对象，而不是不是直接在原对象上操作。&lt;/p&gt;
 &lt;p&gt;示例一：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func main() {
     a := [3]int{1, 2, 3}
@@ -1007,7 +1001,8 @@
 &lt;pre&gt;&lt;code class=&#34;language-powershell&#34;&gt;[1 200 300]
 [101 102 103]
 &lt;/code&gt;&lt;/pre&gt;
-&lt;h3 id=&#34;2-使用range迭代遍历引用类型时底层的数据不会被复制&#34;&gt;2. 使用range迭代遍历引用类型时，底层的数据不会被复制：&lt;/h3&gt;
+&lt;h2 id=&#34;使用-range-迭代遍历切片&#34;&gt;使用 range 迭代遍历切片&lt;/h2&gt;
+&lt;p&gt;range迭代遍历引用类型时，底层的数据不会被复制：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;func main() {
     a := []int{1, 2, 3} // 改成slice
     for i, v := range a {
@@ -1031,13 +1026,27 @@
       </div>
       
       <div class="item">
-        <a class="result-title" style="opacity: 0;" href="https://miodawn.github.io/post/go-de-goroutine-wei-shi-me-kuai/"" data-c="
-          &lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://miodawn.github.io/post-images/1597805468950.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/go-de-goroutine-wei-shi-me-kuai/"" data-c="
+          &lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://ChicRingo.github.io/post-images/1597805468950.jpg&#34; alt=&#34;&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;示例一：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import &amp;quot;fmt&amp;quot;
+
+func main() {
+	a := [3]int{1, 2, 3}
+	for _, v := range a { // 复制一份a遍历[1, 2, 3]
+		v += 100 // v是复制对象中的值，不会改变a数组元素的值
+	}
+	fmt.Println(a) // 1 2 3
+}
+
+&lt;/code&gt;&lt;/pre&gt;
 ">Go的goroutine为什么快</a>
       </div>
       
       <div class="item">
-        <a class="result-title" style="opacity: 0;" href="https://miodawn.github.io/post/golang-mian-shi-ti-dai-geng-xin/"" data-c="
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-mian-shi-ti-dai-geng-xin/"" data-c="
           &lt;ol&gt;
 &lt;li&gt;
 &lt;h2 id=&#34;go的goroutine为什么快&#34;&gt;go的goroutine为什么快&lt;/h2&gt;
@@ -1735,7 +1744,7 @@ OK
       </div>
       
       <div class="item">
-        <a class="result-title" style="opacity: 0;" href="https://miodawn.github.io/post/about/"" data-c="
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/about/"" data-c="
           &lt;blockquote&gt;
 &lt;p&gt;欢迎来到我的小站呀，很高兴遇见你！🤝&lt;/p&gt;
 &lt;/blockquote&gt;
