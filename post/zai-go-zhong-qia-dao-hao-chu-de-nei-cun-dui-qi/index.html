@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>在 Go 中恰到好处的内存对齐 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597891965764">
+<link rel="shortcut icon" href="/favicon.ico?v=1597898640381">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -39,7 +39,7 @@
 
 
   <meta name="description" content="在 Go 中恰到好处的内存对齐" />
-  <meta name="keywords" content="" />
+  <meta name="keywords" content="Golang" />
 </head>
 
 <body>
@@ -543,6 +543,19 @@
     </span>
     
     <span class="meta-item">
+      <i class="fa fa-folder-o"></i>
+      <span class="pc-show language" data-lan="category-in">分类于</span>
+      
+      
+      <a href="https://ChicRingo.github.io/tag/dtG_jQWhR/">
+        <span>Golang</span>
+      </a>
+      
+      
+    </span>
+    <span class="post-meta-divider">|</span>
+    
+    <span class="meta-item">
       <i class="fa fa-clock-o"></i>
       <span>12<span class="language" data-lan="minute">分钟</span></span>
     </span>
@@ -949,6 +962,8 @@ part2 size: 16, align: 8
     </li>
   </ul>
   <div class="tags">
+    
+      <a href="https://ChicRingo.github.io/tag/dtG_jQWhR/"># Golang</a>
     
   </div>
   <div class="nav">
@@ -2325,7 +2340,7 @@ part2 size: 16, align: 8
   Age  int64
 }
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;**注意：**通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt; 通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。&lt;/p&gt;
 &lt;p&gt;举个例子：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;var user = User{Name: &amp;quot;&amp;quot;, Age: 99}
 db.Create(&amp;amp;user)

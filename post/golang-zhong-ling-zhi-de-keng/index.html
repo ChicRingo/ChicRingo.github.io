@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中零值的坑 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597891965764">
+<link rel="shortcut icon" href="/favicon.ico?v=1597898640381">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -558,7 +558,7 @@
   Age  int64
 }
 </code></pre>
-<p>**注意：**通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。</p>
+<p><strong>注意：</strong> 通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。</p>
 <p>举个例子：</p>
 <pre><code class="language-go">var user = User{Name: &quot;&quot;, Age: 99}
 db.Create(&amp;user)
@@ -1989,7 +1989,7 @@ part2 size: 16, align: 8
   Age  int64
 }
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;**注意：**通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;注意：&lt;/strong&gt; 通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。&lt;/p&gt;
 &lt;p&gt;举个例子：&lt;/p&gt;
 &lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;var user = User{Name: &amp;quot;&amp;quot;, Age: 99}
 db.Create(&amp;amp;user)
