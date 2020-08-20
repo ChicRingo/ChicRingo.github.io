@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597921844955">
+<link rel="shortcut icon" href="/favicon.ico?v=1597923409350">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -172,7 +172,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">6</span>
+        <span class="site-item-stat-count">7</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -232,6 +232,8 @@
         
       
         
+      
+        
           
             
       
@@ -268,6 +270,8 @@
         
       
         
+      
+        
           
         
       
@@ -300,6 +304,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/踩坑/" rel="2">踩坑</a>
     
       
+      
+        
       
         
       
@@ -342,6 +348,8 @@
         
       
         
+      
+        
           
         
       
@@ -372,6 +380,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/面试/" rel="1">面试</a>
     
       
+      
+        
       
         
       
@@ -410,6 +420,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/MySQL/" rel="1">MySQL</a>
     
       
+      
+        
       
         
       
@@ -1221,6 +1233,124 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-bing-fa-mo-xing-bing-fa-xie-cheng-de-you-ya-tui-chu/"" data-c="
+          &lt;p&gt;文章来源：&lt;a href=&#34;https://lessisbetter.site/2018/12/02/golang-exit-goroutine-in-3-ways/&#34;&gt;Golang并发模型：并发协程的优雅退出&lt;/a&gt;&lt;br&gt;
+goroutine作为Golang并发的核心，我们不仅要关注它们的创建和管理，当然还要关注如何合理的退出这些协程，不（合理）退出不然可能会造成阻塞、panic、程序行为异常、数据结果不正确等问题。这篇文章介绍，如何合理的退出goroutine，减少软件bug。&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;p&gt;goroutine在退出方面，不像线程和进程，不能通过某种手段&lt;strong&gt;强制&lt;/strong&gt;关闭它们，只能等待goroutine主动退出。但也无需为退出、关闭goroutine而烦恼，下面就介绍3种优雅退出goroutine的方法，只要采用这种最佳实践去设计，基本上就可以确保goroutine退出上不会有问题，尽情享用。&lt;/p&gt;
+&lt;h3 id=&#34;1使用for-range退出&#34;&gt;1：使用for-range退出&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;for-range&lt;/code&gt;是使用频率很高的结构，常用它来遍历数据，&lt;strong&gt;&lt;code&gt;range&lt;/code&gt;能够感知channel的关闭，当channel被发送数据的协程关闭时，range就会结束&lt;/strong&gt;，接着退出for循环。&lt;/p&gt;
+&lt;p&gt;它在并发中的使用场景是：当协程只从1个channel读取数据，然后进行处理，处理后协程退出。下面这个示例程序，当in通道被关闭时，协程可自动退出。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;go func(in &amp;lt;-chan int) {
+    // Using for-range to exit goroutine
+    // range has the ability to detect the close/end of a channel
+    for x := range in {
+        fmt.Printf(&amp;quot;Process %d\n&amp;quot;, x)
+    }
+}(inCh)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;2使用ok退出&#34;&gt;2：使用,ok退出&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;for-select&lt;/code&gt;也是使用频率很高的结构，select提供了多路复用的能力，所以for-select可以让函数具有持续多路处理多个channel的能力。&lt;strong&gt;但select没有感知channel的关闭，这引出了2个问题&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;继续在关闭的通道上读，会读到通道传输数据类型的零值，如果是指针类型，读到nil，继续处理还会产生nil。&lt;/li&gt;
+&lt;li&gt;继续在关闭的通道上写，将会panic。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;问题2可以这样解决，通道只由发送方关闭，接收方不可关闭，即某个写通道只由使用该select的协程关闭，select中就不存在继续在关闭的通道上写数据的问题。&lt;/p&gt;
+&lt;p&gt;问题1可以使用&lt;code&gt;,ok&lt;/code&gt;来检测通道的关闭，使用情况有2种。&lt;/p&gt;
+&lt;p&gt;第一种：&lt;strong&gt;如果某个通道关闭后，需要退出协程，直接return即可&lt;/strong&gt;。示例代码中，该协程需要从in通道读数据，还需要定时打印已经处理的数量，有2件事要做，所有不能使用for-range，需要使用for-select，当in关闭时，&lt;code&gt;ok=false&lt;/code&gt;，我们直接返回。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;go func() {
+	// in for-select using ok to exit goroutine
+	for {
+		select {
+		case x, ok := &amp;lt;-in:
+			if !ok {
+				return
+			}
+			fmt.Printf(&amp;quot;Process %d\n&amp;quot;, x)
+			processedCnt++
+		case &amp;lt;-t.C:
+			fmt.Printf(&amp;quot;Working, processedCnt = %d\n&amp;quot;, processedCnt)
+		}
+	}
+}()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;第二种：如果&lt;strong&gt;某个通道关闭了，不再处理该通道，而是继续处理其他case&lt;/strong&gt;，退出是等待所有的可读通道关闭。我们需要&lt;strong&gt;使用select的一个特征：select不会在nil的通道上进行等待&lt;/strong&gt;。这种情况，把只读通道设置为nil即可解决。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;go func() {
+	// in for-select using ok to exit goroutine
+	for {
+		select {
+		case x, ok := &amp;lt;-in1:
+			if !ok {
+				in1 = nil
+			}
+			// Process
+		case y, ok := &amp;lt;-in2:
+			if !ok {
+				in2 = nil
+			}
+			// Process
+		case &amp;lt;-t.C:
+			fmt.Printf(&amp;quot;Working, processedCnt = %d\n&amp;quot;, processedCnt)
+		}
+
+		// If both in channel are closed, goroutine exit
+		if in1 == nil &amp;amp;&amp;amp; in2 == nil {
+			return
+		}
+	}
+}()
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;3使用退出通道退出&#34;&gt;3：使用退出通道退出&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;使用&lt;code&gt;,ok&lt;/code&gt;来退出使用for-select协程，解决是当读入数据的通道关闭时，没数据读时程序的正常结束&lt;/strong&gt;。想想下面这2种场景，&lt;code&gt;,ok&lt;/code&gt;还能适用吗？&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;接收的协程要退出了，如果它直接退出，不告知发送协程，发送协程将阻塞。&lt;/li&gt;
+&lt;li&gt;启动了一个工作协程处理数据，如何通知它退出？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;使用一个专门的通道，发送退出的信号，可以解决这类问题&lt;/strong&gt;。以第2个场景为例，协程入参包含一个停止通道&lt;code&gt;stopCh&lt;/code&gt;，当&lt;code&gt;stopCh&lt;/code&gt;被关闭，&lt;code&gt;case &amp;lt;-stopCh&lt;/code&gt;会执行，直接返回即可。&lt;/p&gt;
+&lt;p&gt;当我启动了100个worker时，只要&lt;code&gt;main()&lt;/code&gt;执行关闭stopCh，每一个worker都会都到信号，进而关闭。如果&lt;code&gt;main()&lt;/code&gt;向stopCh发送100个数据，这种就低效了。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;func worker(stopCh &amp;lt;-chan struct{}) {
+	go func() {
+		defer fmt.Println(&amp;quot;worker exit&amp;quot;)
+		// Using stop channel explicit exit
+		for {
+			select {
+			case &amp;lt;-stopCh:
+				fmt.Println(&amp;quot;Recv stop signal&amp;quot;)
+				return
+			case &amp;lt;-t.C:
+				fmt.Println(&amp;quot;Working .&amp;quot;)
+			}
+		}
+	}()
+	return
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;最佳实践回顾&#34;&gt;最佳实践回顾&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;发送协程主动关闭通道，接收协程不关闭通道。技巧：把接收方的通道入参声明为只读，如果接收协程关闭只读协程，编译时就会报错。&lt;/li&gt;
+&lt;li&gt;协程处理1个通道，并且是读时，协程优先使用&lt;code&gt;for-range&lt;/code&gt;，因为&lt;code&gt;range&lt;/code&gt;可以关闭通道的关闭自动退出协程。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;,ok&lt;/code&gt;可以处理多个读通道关闭，需要关闭当前使用&lt;code&gt;for-select&lt;/code&gt;的协程。&lt;/li&gt;
+&lt;li&gt;显式关闭通道&lt;code&gt;stopCh&lt;/code&gt;可以处理主动通知协程退出的场景。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;完整示例代码&#34;&gt;完整示例代码&lt;/h3&gt;
+&lt;p&gt;本文所有代码都在仓库，可查看完整示例代码：https://github.com/Shitaibin/golang_goroutine_exit&lt;/p&gt;
+&lt;h3 id=&#34;并发系列文章推荐&#34;&gt;并发系列文章推荐&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://lessisbetter.site/2018/11/16/golang-introduction-to-pipeline/&#34;&gt;Golang并发模型：轻松入门流水线模型&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://lessisbetter.site/2018/11/28/golang-pipeline-fan-model/&#34;&gt;Golang并发模型：轻松入门流水线FAN模式&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://lessisbetter.site/2018/12/02/golang-exit-goroutine-in-3-ways/&#34;&gt;Golang并发模型：并发协程的优雅退出&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;ol&gt;
+&lt;li&gt;如果这篇文章对你有帮助，不妨关注下我的Github，有文章会收到通知。&lt;/li&gt;
+&lt;li&gt;本文作者：&lt;a href=&#34;http://lessisbetter.site/about/&#34;&gt;大彬&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;如果喜欢本文，随意转载，但请保留此原文链接：http://lessisbetter.site/2018/12/02/golang-exit-goroutine-in-3-ways/&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+">Golang并发模型：并发协程的优雅退出</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/yong-golang-xie-pa-chong-yi/"" data-c="
