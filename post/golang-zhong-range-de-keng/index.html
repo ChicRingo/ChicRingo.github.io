@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中 range 的坑 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597898640381">
+<link rel="shortcut icon" href="/favicon.ico?v=1597898734290">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -2089,6 +2089,7 @@ db.Create(&amp;amp;user)  // 此时数据库中该条记录name字段的值就�
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/go-wei-shi-me-zhe-me-kuai/"" data-c="
           &lt;p&gt;本文主要介绍了 Go 程序为了实现极高的并发性能，其内部调度器的实现架构（G-P-M 模型），以及为了最大限度利用计算资源，Go 调度器是如何处理线程阻塞的场景&lt;/p&gt;
 &lt;!-- more --&gt;
+&lt;p&gt;转自&lt;a href=&#34;https://zhuanlan.zhihu.com/p/111346689&#34;&gt;知乎：Go为什么这么“快”&lt;/a&gt;&lt;/p&gt;
 &lt;h2 id=&#34;怎么让我们的系统更快&#34;&gt;&lt;strong&gt;怎么让我们的系统更快&lt;/strong&gt;&lt;/h2&gt;
 &lt;p&gt;随着信息技术的迅速发展，单台服务器处理能力越来越强，迫使编程模式由从前的串行模式升级到并发模型。&lt;/p&gt;
 &lt;p&gt;并发模型包含 IO 多路复用、多进程以及多线程，这几种模型都各有优劣，现代复杂的高并发架构大多是几种模型协同使用，不同场景应用不同模型，扬长避短，发挥服务器的最大性能。&lt;/p&gt;
@@ -2197,7 +2198,6 @@ I/O 多路复用机制“模拟”出来的。Go 中的 net 库正是按照这�
 &lt;p&gt;&lt;a href=&#34;https://link.zhihu.com/?target=https%3A//www.jianshu.com/p/a315224886d2&#34;&gt;https://www.jianshu.com/p/a315224886d2&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;作者： joellwang，腾讯 CSIG 后台开发工程师&lt;/p&gt;
 &lt;p&gt;更多精彩，尽在 &lt;a href=&#34;https://www.zhihu.com/org/teng-xun-ji-zhu-gong-cheng&#34;&gt;腾讯技术&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;转自&lt;a href=&#34;https://zhuanlan.zhihu.com/p/111346689&#34;&gt;知乎：Go为什么这么“快”&lt;/a&gt;&lt;/p&gt;
 ">Go 为什么这么“快”</a>
       </div>
       

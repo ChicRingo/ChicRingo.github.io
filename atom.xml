@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-20T04:44:04.735Z</updated>
+    <updated>2020-08-20T04:45:37.188Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -512,6 +512,7 @@ db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
 ]]></summary>
         <content type="html"><![CDATA[<p>本文主要介绍了 Go 程序为了实现极高的并发性能，其内部调度器的实现架构（G-P-M 模型），以及为了最大限度利用计算资源，Go 调度器是如何处理线程阻塞的场景</p>
 <!-- more -->
+<p>转自<a href="https://zhuanlan.zhihu.com/p/111346689">知乎：Go为什么这么“快”</a></p>
 <h2 id="怎么让我们的系统更快"><strong>怎么让我们的系统更快</strong></h2>
 <p>随着信息技术的迅速发展，单台服务器处理能力越来越强，迫使编程模式由从前的串行模式升级到并发模型。</p>
 <p>并发模型包含 IO 多路复用、多进程以及多线程，这几种模型都各有优劣，现代复杂的高并发架构大多是几种模型协同使用，不同场景应用不同模型，扬长避短，发挥服务器的最大性能。</p>
@@ -620,7 +621,6 @@ I/O 多路复用机制“模拟”出来的。Go 中的 net 库正是按照这�
 <p><a href="https://link.zhihu.com/?target=https%3A//www.jianshu.com/p/a315224886d2">https://www.jianshu.com/p/a315224886d2</a></p>
 <p>作者： joellwang，腾讯 CSIG 后台开发工程师</p>
 <p>更多精彩，尽在 <a href="https://www.zhihu.com/org/teng-xun-ji-zhu-gong-cheng">腾讯技术</a></p>
-<p>转自<a href="https://zhuanlan.zhihu.com/p/111346689">知乎：Go为什么这么“快”</a></p>
 ]]></content>
     </entry>
     <entry>
