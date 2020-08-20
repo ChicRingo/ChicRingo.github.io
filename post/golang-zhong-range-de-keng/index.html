@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 中 range 的坑 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597923409350">
+<link rel="shortcut icon" href="/favicon.ico?v=1597934360367">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -190,7 +190,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">7</span>
+        <span class="site-item-stat-count">8</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -1607,6 +1607,78 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-bing-fa-kong-zhi-de-liang-chong-mo-shi/"" data-c="
+          &lt;p&gt;Golang 两种常用的并发控制，使用 channel 和 WaitGroup 两种模式&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+	&amp;quot;fmt&amp;quot;
+	&amp;quot;sync&amp;quot;
+	&amp;quot;time&amp;quot;
+)
+
+func main() {
+	fmt.Println(&amp;quot;Hello, 世界&amp;quot;)
+	handle1()
+	handle2()
+}
+
+func handle1() {
+	// 通过无缓冲通道来实现多 goroutine 并发控制
+
+	// create channel to synchronize
+	done := make(chan bool) // 无缓冲通道
+	defer close(done)
+
+	go func() {
+		time.Sleep(9 * time.Second)
+		fmt.Println(&amp;quot;one done&amp;quot;)
+		done &amp;lt;- true
+	}()
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		fmt.Println(&amp;quot;two done&amp;quot;)
+		done &amp;lt;- true
+	}()
+
+	// wait until both are done
+	for c := 0; c &amp;lt; 2; c++ {
+		&amp;lt;-done
+	}
+	fmt.Println(&amp;quot;handle1 done&amp;quot;)
+	// 当主 goroutine 运行到 &amp;lt;-done 接受 channel 的值的时候，如果该  channel 中没有数据，就会一直阻塞等待，直到有值。
+}
+
+func handle2() {
+	// 通过sync包中的WaitGroup 实现并发控制
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		time.Sleep(5 * time.Second)
+		fmt.Println(&amp;quot;1 done&amp;quot;)
+		wg.Done()
+	}(&amp;amp;wg)
+
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		time.Sleep(9 * time.Second)
+		fmt.Println(&amp;quot;2 done&amp;quot;)
+		wg.Done()
+	}(&amp;amp;wg)
+	wg.Wait()
+	fmt.Println(&amp;quot;handle2 done&amp;quot;)
+
+	// 在 sync 包中，提供了 WaitGroup ，它会等待它收集的所有 goroutine 任务全部完成，在主 goroutine 中 Add(delta int) 索要等待goroutine 的数量。在每一个 goroutine 完成后 Done() 表示这一个goroutine 已经完成，当所有的 goroutine 都完成后，在主 goroutine 中 WaitGroup 返回。
+}
+&lt;/code&gt;&lt;/pre&gt;
+">Golang 并发控制的两种模式</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-bing-fa-mo-xing-bing-fa-xie-cheng-de-you-ya-tui-chu/"" data-c="

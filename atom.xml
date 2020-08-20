@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-20T11:36:52.490Z</updated>
+    <updated>2020-08-20T14:39:25.084Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,83 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[Golang 并发控制的两种模式]]></title>
+        <id>https://ChicRingo.github.io/post/golang-bing-fa-kong-zhi-de-liang-chong-mo-shi/</id>
+        <link href="https://ChicRingo.github.io/post/golang-bing-fa-kong-zhi-de-liang-chong-mo-shi/">
+        </link>
+        <updated>2020-08-20T14:38:27.000Z</updated>
+        <summary type="html"><![CDATA[<p>Golang 两种常用的并发控制，使用 channel 和 WaitGroup 两种模式</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>Golang 两种常用的并发控制，使用 channel 和 WaitGroup 两种模式</p>
+<!-- more -->
+<pre><code class="language-go">package main
+
+import (
+	&quot;fmt&quot;
+	&quot;sync&quot;
+	&quot;time&quot;
+)
+
+func main() {
+	fmt.Println(&quot;Hello, 世界&quot;)
+	handle1()
+	handle2()
+}
+
+func handle1() {
+	// 通过无缓冲通道来实现多 goroutine 并发控制
+
+	// create channel to synchronize
+	done := make(chan bool) // 无缓冲通道
+	defer close(done)
+
+	go func() {
+		time.Sleep(9 * time.Second)
+		fmt.Println(&quot;one done&quot;)
+		done &lt;- true
+	}()
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		fmt.Println(&quot;two done&quot;)
+		done &lt;- true
+	}()
+
+	// wait until both are done
+	for c := 0; c &lt; 2; c++ {
+		&lt;-done
+	}
+	fmt.Println(&quot;handle1 done&quot;)
+	// 当主 goroutine 运行到 &lt;-done 接受 channel 的值的时候，如果该  channel 中没有数据，就会一直阻塞等待，直到有值。
+}
+
+func handle2() {
+	// 通过sync包中的WaitGroup 实现并发控制
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		time.Sleep(5 * time.Second)
+		fmt.Println(&quot;1 done&quot;)
+		wg.Done()
+	}(&amp;wg)
+
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		time.Sleep(9 * time.Second)
+		fmt.Println(&quot;2 done&quot;)
+		wg.Done()
+	}(&amp;wg)
+	wg.Wait()
+	fmt.Println(&quot;handle2 done&quot;)
+
+	// 在 sync 包中，提供了 WaitGroup ，它会等待它收集的所有 goroutine 任务全部完成，在主 goroutine 中 Add(delta int) 索要等待goroutine 的数量。在每一个 goroutine 完成后 Done() 表示这一个goroutine 已经完成，当所有的 goroutine 都完成后，在主 goroutine 中 WaitGroup 返回。
+}
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Golang并发模型：并发协程的优雅退出]]></title>
         <id>https://ChicRingo.github.io/post/golang-bing-fa-mo-xing-bing-fa-xie-cheng-de-you-ya-tui-chu/</id>
