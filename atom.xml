@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-20T04:45:37.188Z</updated>
+    <updated>2020-08-20T08:07:24.393Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,109 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[用Golang写爬虫(一)]]></title>
+        <id>https://ChicRingo.github.io/post/yong-golang-xie-pa-chong-yi/</id>
+        <link href="https://ChicRingo.github.io/post/yong-golang-xie-pa-chong-yi/">
+        </link>
+        <updated>2020-08-20T08:06:25.000Z</updated>
+        <summary type="html"><![CDATA[<p>使用 Golang 对豆瓣爬虫</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>使用 Golang 对豆瓣爬虫</p>
+<!-- more -->
+<p>原文地址: <a href="https://link.zhihu.com/?target=https%3A//strconv.com/posts/web-crawler-exercise-1/">https://strconv.com/posts/web-crawler-exercise-1/</a></p>
+<p>之前一直都是再用Python写爬虫，最近想体验下Golang写爬虫的感觉，所以就有了这个系列。我想要抓取的页面是<a href="https://link.zhihu.com/?target=https%3A//movie.douban.com/top250">豆瓣Top250页面</a>，选择它的理由有3个:</p>
+<ol>
+<li>豆瓣页面代码相对规范</li>
+<li>豆瓣对爬虫爱好者相对更宽容</li>
+<li>Top250页面简洁，很适合拿来练手</li>
+</ol>
+<p>我们先看第一版的代码。</p>
+<p>按逻辑我把抓取代码分成2个部分：</p>
+<ol>
+<li>HTTP请求</li>
+<li>解析页面中的内容</li>
+</ol>
+<p>我们先看HTTP请求，Golang语言的HTTP请求库不需要使用第三方的库，标准库就内置了足够好的支持：</p>
+<pre><code class="language-go">import (
+    &quot;fmt&quot;
+    &quot;net/http&quot;
+    &quot;io/ioutil&quot;
+)
+
+func fetch (url string) string {
+    fmt.Println(&quot;Fetch Url&quot;, url)
+    client := &amp;http.Client{}
+    req, _ := http.NewRequest(&quot;GET&quot;, url, nil)
+    req.Header.Set(&quot;User-Agent&quot;, &quot;Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)&quot;)
+    resp, err := client.Do(req)
+    if err != nil {
+        fmt.Println(&quot;Http get err:&quot;, err)
+        return &quot;&quot;
+    }
+    if resp.StatusCode != 200 {
+        fmt.Println(&quot;Http status code:&quot;, resp.StatusCode)
+        return &quot;&quot;
+    }
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println(&quot;Read error&quot;, err)
+        return &quot;&quot;
+    }
+    return string(body)
+}
+</code></pre>
+<p>我把URL请求的逻辑都放在了fetch函数中，里面做了一些异常处理。值得说的有2点：</p>
+<ol>
+<li>在Header中设置了User-Agent，让访问看起来更像搜索引擎Bot。如果一个网站希望自己的内容被Google收录那么他就不会拒绝这样的UA的访问。</li>
+<li>需要通过ioutil.ReadAll 读取resp的body内容，最后用string(body)把它转化成字符串</li>
+</ol>
+<p>接着就是解析页面的部分：</p>
+<pre><code class="language-go">import (
+    &quot;regexp&quot;
+    &quot;strings&quot;
+)
+
+func parseUrls(url string) {
+    body := fetch(url)
+    body = strings.Replace(body, &quot;\n&quot;, &quot;&quot;, -1)
+    rp := regexp.MustCompile(`&lt;div class=&quot;hd&quot;&gt;(.*?)&lt;/div&gt;`)
+    titleRe := regexp.MustCompile(`&lt;span class=&quot;title&quot;&gt;(.*?)&lt;/span&gt;`)
+    idRe := regexp.MustCompile(`&lt;a href=&quot;https://movie.douban.com/subject/(\d+)/&quot;`)
+    items := rp.FindAllStringSubmatch(body, -1)
+    for _, item := range items {
+        fmt.Println(idRe.FindStringSubmatch(item[1])[1],
+            titleRe.FindStringSubmatch(item[1])[1])
+    }
+}
+</code></pre>
+<p>这篇文章我们主要体验用标准库完成页面的解析，也就是用正则表达式包regexp来完成。不过要注意需要用<code>strings.Replace(body, &quot;\n&quot;, &quot;&quot;, -1)</code>这步把body内容中的回车符去掉，要不然下面的正则表达式<code>.*</code>就不符合了。<code>FindAllStringSubmatch</code>方法会把符合正则表达式的结果都解析出来（一个列表），而<code>FindStringSubmatch</code>是找第一个符合的结果。</p>
+<p>Top250页面是要翻页的，最后在main函数里面实现抓取全部Top250页面。另外为了和之后的改进做对比，我们加上代码运行耗时的逻辑：</p>
+<pre><code class="language-go">import (
+       &quot;time&quot;
+       &quot;strconv&quot;
+)
+func main() {
+        start := time.Now()
+        for i := 0; i &lt; 10; i++ {
+                parseUrls(&quot;https://movie.douban.com/top250?start=&quot; + strconv.Itoa(25 * i))
+        }
+        elapsed := time.Since(start)
+        fmt.Printf(&quot;Took %s&quot;, elapsed)
+}
+</code></pre>
+<p>在Golang中把数字转成字符串需要使用<code>strconv.Itoa</code>（嘿嘿，本博客域名就是这个模块），这样就可以根据start的参数的不通拼出正确的页面路径。用一个for循环完成翻页。</p>
+<p>运行起来非常快：</p>
+<pre><code class="language-bash">❯ go run crawler/doubanCrawler1.go
+... # 省略输出
+Took 1.454627547s
+</code></pre>
+<p>通过终端输出可以看到我们拿到了对应电影条目的ID和电影标题！</p>
+<h3 id="代码地址">代码地址</h3>
+<p>完整代码可以在<a href="https://link.zhihu.com/?target=https%3A//github.com/golang-dev/strconv.code/blob/master/crawler/doubanCrawler1.go">这个地址</a>找到。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[在 Go 中恰到好处的内存对齐]]></title>
         <id>https://ChicRingo.github.io/post/zai-go-zhong-qia-dao-hao-chu-de-nei-cun-dui-qi/</id>
