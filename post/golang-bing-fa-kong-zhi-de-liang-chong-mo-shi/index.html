@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>Golang 并发控制的两种模式 | ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597934360367">
+<link rel="shortcut icon" href="/favicon.ico?v=1597990549515">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -328,7 +328,7 @@
     <span class="meta-item">
       <span class="post-meta-divider">|</span>
       <i class="fa fa-file-word-o"></i>
-      <span>312<span class="pc-show language" data-lan="words">字数</span></span>
+      <span>302<span class="pc-show language" data-lan="words">字数</span></span>
     </span>
     
   </div>
@@ -358,13 +358,13 @@ func handle1() {
 	defer close(done)
 
 	go func() {
-		time.Sleep(9 * time.Second)
+		time.Sleep(1 * time.Second)
 		fmt.Println(&quot;one done&quot;)
 		done &lt;- true
 	}()
 
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		fmt.Println(&quot;two done&quot;)
 		done &lt;- true
 	}()
@@ -383,18 +383,18 @@ func handle2() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		time.Sleep(5 * time.Second)
+	go func() {
+		time.Sleep(1 * time.Second)
 		fmt.Println(&quot;1 done&quot;)
 		wg.Done()
-	}(&amp;wg)
+	}()
 
 	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		time.Sleep(9 * time.Second)
+	go func() {
+		time.Sleep(1 * time.Second)
 		fmt.Println(&quot;2 done&quot;)
 		wg.Done()
-	}(&amp;wg)
+	}()
 	wg.Wait()
 	fmt.Println(&quot;handle2 done&quot;)
 
@@ -1432,13 +1432,13 @@ func handle1() {
 	defer close(done)
 
 	go func() {
-		time.Sleep(9 * time.Second)
+		time.Sleep(1 * time.Second)
 		fmt.Println(&amp;quot;one done&amp;quot;)
 		done &amp;lt;- true
 	}()
 
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		fmt.Println(&amp;quot;two done&amp;quot;)
 		done &amp;lt;- true
 	}()
@@ -1457,18 +1457,18 @@ func handle2() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		time.Sleep(5 * time.Second)
+	go func() {
+		time.Sleep(1 * time.Second)
 		fmt.Println(&amp;quot;1 done&amp;quot;)
 		wg.Done()
-	}(&amp;amp;wg)
+	}()
 
 	wg.Add(1)
-	go func(wg *sync.WaitGroup) {
-		time.Sleep(9 * time.Second)
+	go func() {
+		time.Sleep(1 * time.Second)
 		fmt.Println(&amp;quot;2 done&amp;quot;)
 		wg.Done()
-	}(&amp;amp;wg)
+	}()
 	wg.Wait()
 	fmt.Println(&amp;quot;handle2 done&amp;quot;)
 
