@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-21T06:15:55.364Z</updated>
+    <updated>2020-08-21T11:19:30.756Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,74 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[使用2个goroutine轮流打印一个数组]]></title>
+        <id>https://ChicRingo.github.io/post/shi-yong-2-ge-goroutine-lun-liu-da-yin-yi-ge-shu-zu/</id>
+        <link href="https://ChicRingo.github.io/post/shi-yong-2-ge-goroutine-lun-liu-da-yin-yi-ge-shu-zu/">
+        </link>
+        <updated>2020-08-21T11:11:56.000Z</updated>
+        <summary type="html"><![CDATA[<p>今天遇到群友的一到面试题，感觉在各种地方看到很多次这种类似的题目，比如打印奇偶数，所以记录整理下来。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>今天遇到群友的一到面试题，感觉在各种地方看到很多次这种类似的题目，比如打印奇偶数，所以记录整理下来。</p>
+<!-- more -->
+<pre><code class="language-go">package main
+
+import (
+    &quot;fmt&quot;
+    &quot;sync&quot;
+)
+
+// 使用2个goroutine轮流打印一个数组
+var wg sync.WaitGroup
+var ch = make(chan bool)
+var send = make(chan int)
+
+func main() {
+    wg.Add(3)
+    nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+    l := len(nums)
+    go Send(nums, l)      // 发送
+    go printOdd(l)  // 打印奇数
+    go printEven(l) // 打印偶数
+    wg.Wait()
+}
+
+// 发送数组元素
+func Send(nums []int, l int) {
+    defer wg.Done()
+    for i := 0; i &lt; l; i++ {
+        a := nums[i]
+        send &lt;- a
+    }
+}
+
+// 打印奇数
+func printEven(l int) {
+    defer wg.Done()
+    for i := 0; i &lt; l; i++ {
+        ch &lt;- true
+        if i&amp;1 == 0 {
+            a := &lt;-send
+            fmt.Println(&quot;printEven:&quot;, a)
+        }
+    }
+}
+
+// 打印偶数
+func printOdd(l int) {
+    defer wg.Done()
+    for i := 0; i &lt; l; i++ {
+        &lt;-ch
+        if i&amp;1 == 1 {
+            a := &lt;-send
+            fmt.Println(&quot;printOdd: &quot;, a)
+        }
+    }
+}
+
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Golang 并发控制的两种模式]]></title>
         <id>https://ChicRingo.github.io/post/golang-bing-fa-kong-zhi-de-liang-chong-mo-shi/</id>

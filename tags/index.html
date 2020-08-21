@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1597990549515">
+<link rel="shortcut icon" href="/favicon.ico?v=1598008767045">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -172,7 +172,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">8</span>
+        <span class="site-item-stat-count">9</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -236,6 +236,8 @@
         
       
         
+      
+        
           
             
       
@@ -276,6 +278,8 @@
         
       
         
+      
+        
           
         
       
@@ -308,6 +312,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/踩坑/" rel="2">踩坑</a>
     
       
+      
+        
       
         
       
@@ -358,6 +364,8 @@
         
       
         
+      
+        
           
         
       
@@ -388,6 +396,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/面试/" rel="1">面试</a>
     
       
+      
+        
       
         
       
@@ -430,6 +440,8 @@
       <a class="cloud-tag" href="https://ChicRingo.github.io/tag/MySQL/" rel="1">MySQL</a>
     
       
+      
+        
       
         
       
@@ -1245,6 +1257,69 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/shi-yong-2-ge-goroutine-lun-liu-da-yin-yi-ge-shu-zu/"" data-c="
+          &lt;p&gt;今天遇到群友的一到面试题，感觉在各种地方看到很多次这种类似的题目，比如打印奇偶数，所以记录整理下来。&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import (
+    &amp;quot;fmt&amp;quot;
+    &amp;quot;sync&amp;quot;
+)
+
+// 使用2个goroutine轮流打印一个数组
+var wg sync.WaitGroup
+var ch = make(chan bool)
+var send = make(chan int)
+
+func main() {
+    wg.Add(3)
+    nums := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+    l := len(nums)
+    go Send(nums, l)      // 发送
+    go printOdd(l)  // 打印奇数
+    go printEven(l) // 打印偶数
+    wg.Wait()
+}
+
+// 发送数组元素
+func Send(nums []int, l int) {
+    defer wg.Done()
+    for i := 0; i &amp;lt; l; i++ {
+        a := nums[i]
+        send &amp;lt;- a
+    }
+}
+
+// 打印奇数
+func printEven(l int) {
+    defer wg.Done()
+    for i := 0; i &amp;lt; l; i++ {
+        ch &amp;lt;- true
+        if i&amp;amp;1 == 0 {
+            a := &amp;lt;-send
+            fmt.Println(&amp;quot;printEven:&amp;quot;, a)
+        }
+    }
+}
+
+// 打印偶数
+func printOdd(l int) {
+    defer wg.Done()
+    for i := 0; i &amp;lt; l; i++ {
+        &amp;lt;-ch
+        if i&amp;amp;1 == 1 {
+            a := &amp;lt;-send
+            fmt.Println(&amp;quot;printOdd: &amp;quot;, a)
+        }
+    }
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+">使用2个goroutine轮流打印一个数组</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/golang-bing-fa-kong-zhi-de-liang-chong-mo-shi/"" data-c="
