@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-21T11:22:47.943Z</updated>
+    <updated>2020-08-22T08:45:17.909Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,15 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[使用 Hugo 搭建博客]]></title>
+        <id>https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/</id>
+        <link href="https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/">
+        </link>
+        <updated>2020-08-21T15:40:21.000Z</updated>
+        <content type="html"><![CDATA[<p>https://www.diguage.com/post/building-blog-with-hugo/</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[使用2个goroutine轮流打印一个数组]]></title>
         <id>https://ChicRingo.github.io/post/shi-yong-2-ge-goroutine-lun-liu-da-yin-yi-ge-shu-zu/</id>
