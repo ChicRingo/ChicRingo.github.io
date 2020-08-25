@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-22T08:45:17.909Z</updated>
+    <updated>2020-08-25T01:03:06.673Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,308 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[我擦~字符串转字节切片后，切片的容量竟然千奇百怪]]></title>
+        <id>https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/</id>
+        <link href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/">
+        </link>
+        <updated>2020-08-25T00:56:36.000Z</updated>
+        <summary type="html"><![CDATA[<p>字符串转字节切片步骤如下</p>
+<ol>
+<li>
+<p>判断是否是常量， 如果是常量则转换为等容量等长的字节切片</p>
+</li>
+<li>
+<p>如果是变量， 先判断生成的切片是否发生变量逃逸</p>
+</li>
+<li>
+<ul>
+<li>如果逃逸或者字符串长度&gt;32， 则根据字符串长度可以计算出不同的容量</li>
+<li>如果未逃逸且字符串长度&lt;=32, 则字符切片容量为32</li>
+</ul>
+</li>
+</ol>
+]]></summary>
+        <content type="html"><![CDATA[<p>字符串转字节切片步骤如下</p>
+<ol>
+<li>
+<p>判断是否是常量， 如果是常量则转换为等容量等长的字节切片</p>
+</li>
+<li>
+<p>如果是变量， 先判断生成的切片是否发生变量逃逸</p>
+</li>
+<li>
+<ul>
+<li>如果逃逸或者字符串长度&gt;32， 则根据字符串长度可以计算出不同的容量</li>
+<li>如果未逃逸且字符串长度&lt;=32, 则字符切片容量为32</li>
+</ul>
+</li>
+</ol>
+<!-- more -->
+<p>以下文章来源于新世界杂货铺 ，作者许文</p>
+<p><a href="https://baijiahao.baidu.com/s?id=1671902920320901161"><strong>新世界杂货铺</strong>作为一名Gopher， 我愿称之为Go的干(杂)货铺子！</a></p>
+<p>神奇的现象</p>
+<p>切片， 切片， 又是切片!</p>
+<p>今天遇到的神奇问题和切片有关， 具体怎么个神奇法， 我们来看看下面几个现象</p>
+<h3 id="现象一">现象一</h3>
+<pre><code>a := &quot;abc&quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出： [97 98 99] 3 8
+</code></pre>
+<h3 id="现象二">现象二</h3>
+<pre><code>a := &quot;abc&quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 32
+</code></pre>
+<h3 id="现象三">现象三</h3>
+<pre><code>bs := []byte(&quot;abc&quot;)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 3
+</code></pre>
+<h3 id="现象四">现象四</h3>
+<pre><code>a := &quot;&quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出: [] 0 0
+</code></pre>
+<h3 id="现象五">现象五</h3>
+<pre><code>a := &quot;&quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 0 32
+</code></pre>
+<h2 id="分析">分析</h2>
+<p>到这儿我已经满脑子问号了</p>
+<figure data-type="image" tabindex="1"><img src="https://mmbiz.qpic.cn/mmbiz_jpg/JTbQwON6HwLCaWz0ZWL9fG6r4Tb8bRCNIgpKYm1jhPB3fbuxia13qrFQvHdsT9fa6voJicXvD5SHe6c1jDXKngNw/640?wx_fmt=jpeg&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="img" loading="lazy"></figure>
+<h3 id="字符串变量转切片">字符串变量转切片</h3>
+<p>一个小小的字符串转切片， 内部究竟发生了什么， 竟然如此的神奇。这种时候只好祭出汇编大法， 看看汇编代码(<code>希望之后有机会能够对go的汇编语法进行简单的介绍</code>)有没有什么关键词能够帮助我们</p>
+<p>以下为现象一转换的汇编代码关键部分</p>
+<pre><code>&quot;&quot;.main STEXT size=495 args=0x0 locals=0xd8
+	0x0000 00000 (test.go:5)	TEXT	&quot;&quot;.main(SB), ABIInternal, $216-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-88(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	485
+	0x0018 00024 (test.go:5)	SUBQ	$216, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 208(SP)
+	0x0027 00039 (test.go:5)	LEAQ	208(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·7be4bbacbfdb05fb3044e36c22b41e8b(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·648d0b72bb9d7f59fbfdbee57a078eee(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·2dfddcc7190380b1ae77e69d81f0a101(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &quot;&quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+96(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+104(SP)
+	0x0044 00068 (test.go:7)	MOVQ	$0, (SP)
+	0x004c 00076 (test.go:7)	PCDATA	$0, $0
+	0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x005f 00095 (test.go:7)	MOVQ	40(SP), AX
+	0x0064 00100 (test.go:7)	MOVQ	32(SP), CX
+	0x0069 00105 (test.go:7)	PCDATA	$0, $2
+	0x0069 00105 (test.go:7)	MOVQ	24(SP), DX
+	0x006e 00110 (test.go:7)	PCDATA	$0, $0
+	0x006e 00110 (test.go:7)	PCDATA	$1, $1
+	0x006e 00110 (test.go:7)	MOVQ	DX, &quot;&quot;.bs+112(SP)
+	0x0073 00115 (test.go:7)	MOVQ	CX, &quot;&quot;.bs+120(SP)
+	0x0078 00120 (test.go:7)	MOVQ	AX, &quot;&quot;.bs+128(SP)
+</code></pre>
+<p>以下为现象二转换的汇编代码关键部分</p>
+<pre><code>&quot;&quot;.main STEXT size=393 args=0x0 locals=0xe0
+	0x0000 00000 (test.go:5)	TEXT	&quot;&quot;.main(SB), ABIInternal, $224-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-96(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	383
+	0x0018 00024 (test.go:5)	SUBQ	$224, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 216(SP)
+	0x0027 00039 (test.go:5)	LEAQ	216(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·0ce64bbc7cfa5ef04d41c861de81a3d7(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·00590b99cfcd6d71bbbc6e05cb4f8bf8(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·8dcadbff7c52509cfe2d26e4d7d24689(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &quot;&quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+120(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+128(SP)
+	0x0047 00071 (test.go:7)	PCDATA	$0, $2
+	0x0047 00071 (test.go:7)	LEAQ	&quot;&quot;..autotmp_5+64(SP), CX
+	0x004c 00076 (test.go:7)	PCDATA	$0, $1
+	0x004c 00076 (test.go:7)	MOVQ	CX, (SP)
+	0x0050 00080 (test.go:7)	PCDATA	$0, $0
+	0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x0063 00099 (test.go:7)	MOVQ	40(SP), AX
+	0x0068 00104 (test.go:7)	MOVQ	32(SP), CX
+	0x006d 00109 (test.go:7)	PCDATA	$0, $3
+	0x006d 00109 (test.go:7)	MOVQ	24(SP), DX
+	0x0072 00114 (test.go:7)	PCDATA	$0, $0
+	0x0072 00114 (test.go:7)	PCDATA	$1, $1
+	0x0072 00114 (test.go:7)	MOVQ	DX, &quot;&quot;.bs+136(SP)
+	0x007a 00122 (test.go:7)	MOVQ	CX, &quot;&quot;.bs+144(SP)
+	0x0082 00130 (test.go:7)	MOVQ	AX, &quot;&quot;.bs+152(SP)
+</code></pre>
+<p>在看汇编代码之前， 我们首先来看一看<code>runtime.stringtoslicebyte</code>的函数签名</p>
+<pre><code>func stringtoslicebyte(buf *tmpBuf, s string) []byte
+</code></pre>
+<p>到这里只靠关键词已经无法看出更多的信息了,还是需要稍微了解一下汇编的语法,笔者在这里列出一点简单的分析， 之后我们还是可以通过取巧的方法发现更多的东西</p>
+<pre><code>// 现象一给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX // 将字符串&quot;abc&quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+96(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+104(SP) // 将字符串长度3存入变量a中
+0x0044 00068 (test.go:7)	MOVQ	$0, (SP) // 将0 传递个runtime.stringtoslicebyte(SB)的第一个参数(笔者猜测对应go中的nil)
+0x004c 00076 (test.go:7)	PCDATA	$0, $0 // 据说和gc有关， 具体还不清楚， 一般情况可以忽略
+0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB) // 调用函数， 此行后面的几行代码是将返回值赋值给变量bs
+
+// 现象二给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX // 将字符串&quot;abc&quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+120(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+128(SP) // 将字符串长度3存入变量a中
+0x0047 00071 (test.go:7)	PCDATA	$0, $2
+0x0047 00071 (test.go:7)	LEAQ	&quot;&quot;..autotmp_5+64(SP), CX // 将内部变量autotmp_5放入寄存器CX
+0x004c 00076 (test.go:7)	PCDATA	$0, $1
+0x004c 00076 (test.go:7)	MOVQ	CX, (SP) // 将CX中的内容传递给runtime.stringtoslicebyte(SB)的第一个参数
+0x0050 00080 (test.go:7)	PCDATA	$0, $0
+0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+</code></pre>
+<p>通过上面汇编代码的分析可以知道，现象一和现象二的区别就是传递给<code>runtime.stringtoslicebyte</code>的第一个参数不同。通过对runtime包中<code>stringtoslicebyte</code>函数分析，第一个参数是否有值和字符串长度会影响代码执行的分支，从而生成不同的切片， 因此容量不一样也是常理之中， 下面我们看源码</p>
+<pre><code>func stringtoslicebyte(buf *tmpBuf, s string) []byte {
+	var b []byte
+	if buf != nil &amp;&amp; len(s) &lt;= len(buf) {
+		*buf = tmpBuf{}
+		b = buf[:len(s)]
+	} else {
+		b = rawbyteslice(len(s))
+	}
+	copy(b, s)
+	return b
+}
+</code></pre>
+<p>然而， stringtoslicebyte的第一个参数什么情况下才会有值，什么情况下为nil, 我们仍然不清楚。那怎么办呢， 只好祭出全局搜索大法：</p>
+<pre><code># 在go源码根目录执行下面的命令
+grep stringtoslicebyte -r . | grep -v &quot;//&quot;
+</code></pre>
+<p>最终在go的编译器源码cmd/compile/internal/gc/walk.go发现了如下代码块</p>
+<figure data-type="image" tabindex="2"><img src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==" alt="img" loading="lazy"></figure>
+<p>我们查看<code>mkcall</code> 函数签名可以知道, 从第四个参数开始的所有变量都会作为参数传递给第一个参数对应的函数， 最后生成一个<code>*Node</code>的变量。其中Node结构体解释如下:</p>
+<pre><code>// A Node is a single node in the syntax tree.
+// Actually the syntax tree is a syntax DAG, because there is only one
+// node with Op=ONAME for a given instance of a variable x.
+// The same is true for Op=OTYPE and Op=OLITERAL. See Node.mayBeShared.
+</code></pre>
+<p>综合上述信息我们得出的结论是，编译器会对stringtoslicebyte的函数调用生成一个AST(抽象语法树)对应的节点。因此我们也知道传递给stringtoslicebyte函数的第一个变量也就对应于上图中的变量a.</p>
+<p>其中a的初始值为<code>nodnil()</code>的返回值，即默认为<code>nil</code>. 但是<code>n.Esc == EscNone</code>时，a会变成一个数组。我们看一下EscNone的解释.</p>
+<pre><code>// 此代码位于cmd/compile/internal/gc/esc.go中
+const (
+	// ...
+	EscNone           // Does not escape to heap, result, or parameters.
+    ...
+)
+</code></pre>
+<p>由上可知, <code>EscNone</code>用来判断变量是否逃逸,到这儿了我们就很好办了，接下来我们对现象一和现象二的代码进行逃逸分析.</p>
+<pre><code># 执行变量逃逸分析命令: go run -gcflags '-m -l' test.go
+# 现象一逃逸分析如下：
+./test.go:7:14: ([]byte)(a) escapes to heap
+./test.go:8:13: main ... argument does not escape
+./test.go:8:13: bs escapes to heap
+./test.go:8:21: len(bs) escapes to heap
+./test.go:8:30: cap(bs) escapes to heap
+[97 98 99] 3 8
+# 现象二逃逸分析如下：
+./test.go:7:14: main ([]byte)(a) does not escape
+./test.go:8:13: main ... argument does not escape
+./test.go:8:17: len(bs) escapes to heap
+./test.go:8:26: cap(bs) escapes to heap
+3 32
+</code></pre>
+<p>根据上面的信息我们知道在现象一中，bs变量发生了逃逸，现象二中变量未发生逃逸，也就是说stringtoslicebyte函数的第一个参数在变量未发生逃逸时其值不为nil,变量发生逃逸时其值为nil。到这里我们已经搞明白stringtoslicebyte的第一个参数了， 那我们继续分析stringtoslicebyte的内部逻辑</p>
+<p>我们在runtime/string.go中看到stringtoslicebyte第一个参数的类型定义如下：</p>
+<pre><code>const tmpStringBufSize = 32
+
+type tmpBuf [tmpStringBufSize]byte
+</code></pre>
+<p>综上: 现象二中bs变量未发生变量逃逸, stringtoslicebyte第一个参数不为空且是一个长度为32的byte数组, 因此在现象二中生成了一个容量为32的切片</p>
+<p>根据对stringtoslicebyte的源码分析， 我们知道现象一调用了<code>rawbyteslice</code>函数</p>
+<pre><code>func rawbyteslice(size int) (b []byte) {
+	cap := roundupsize(uintptr(size))
+	p := mallocgc(cap, nil, false)
+	if cap != uintptr(size) {
+		memclrNoHeapPointers(add(p, uintptr(size)), cap-uintptr(size))
+	}
+
+	*(*slice)(unsafe.Pointer(&amp;b)) = slice{p, size, int(cap)}
+	return
+}
+</code></pre>
+<p>由上面的代码知道， 切片的容量通过runtime/msize.go中的<code>roundupsize</code>函数计算得出, 其中_MaxSmallSize和class_to_size均定义在runtime/sizeclasses.go</p>
+<pre><code>func roundupsize(size uintptr) uintptr {
+	if size &lt; _MaxSmallSize {
+		if size &lt;= smallSizeMax-8 {
+			return uintptr(class_to_size[size_to_class8[(size+smallSizeDiv-1)/smallSizeDiv]])
+		} else {
+			return uintptr(class_to_size[size_to_class128[(size-smallSizeMax+largeSizeDiv-1)/largeSizeDiv]])
+		}
+	}
+	if size+_PageSize &lt; size {
+		return size
+	}
+	return round(size, _PageSize)
+}
+</code></pre>
+<p>由于字符串abc的长度小于_MaxSmallSize(32768)，故切片的长度只能取数组class_to_size中的值， 即<code>0, 8, 16, 32, 48, 64, 80, 96, 112, 128....</code>s</p>
+<p>至此, 现象一中切片容量为什么为8也真相大白了。相信到这里很多人已经明白现象四和现象五是怎么回事儿了, 其逻辑分别与现象一和现象二是一致的， 有兴趣的， 可以在自己的电脑上面试一试。</p>
+<h3 id="字符串直接转切片">字符串直接转切片</h3>
+<p>那你说了这么多， 现象三还是不能解释啊。请各位看官莫急， 接下来我们继续分析。</p>
+<p>相信各位细心的小伙伴应该早就发现了我们在上面的<code>cmd/compile/internal/gc/walk.go</code>源码图中折叠了部分代码， 现在我们就将这块神秘的代码赤裸裸的展示出来</p>
+<p>我们分析这块代码发现,go编译器在将<code>字符串转字节切片</code>生成AST时，总共分为三步。</p>
+<ol>
+<li>先判断该变量是否是常量字符串,如果是常量字符串,则直接通过<code>types.NewArray</code>创建一个和字符串等长的数组</li>
+<li>常量字符串生成的切片变量也要进行逃逸分析，并判断其大小是否大于函数栈允许分配给变量的最大长度， 从而判断节点是分配在栈上还是在堆上</li>
+<li>最后，如果字符串长度是大于0， 将字符串内容复制到字节切片中， 然后返回。因此现象三中的切片容量是3也就完全清楚了</li>
+</ol>
+<h2 id="结论">结论</h2>
+<p>字符串转字节切片步骤如下</p>
+<ol>
+<li>
+<p>判断是否是常量， 如果是常量则转换为等容量等长的字节切片</p>
+</li>
+<li>
+<p>如果是变量， 先判断生成的切片是否发生变量逃逸</p>
+</li>
+<li>
+<ul>
+<li>如果逃逸或者字符串长度&gt;32， 则根据字符串长度可以计算出不同的容量</li>
+<li>如果未逃逸且字符串长度&lt;=32, 则字符切片容量为32</li>
+</ul>
+</li>
+</ol>
+<h2 id="扩展">扩展</h2>
+<p>常见逃逸情况</p>
+<ol>
+<li>函数返回局部指针</li>
+<li>栈空间不足逃逸</li>
+<li>动态类型逃逸, 很多函数参数为interface类型，比如fmt.Println(a ...interface{})，编译期间很难确定其参数的具体类型, 也会发生逃逸</li>
+<li>闭包引用对象逃逸</li>
+</ol>
+<blockquote>
+<p>注: 写本文时， 笔者所用go版本为: go1.13.4</p>
+</blockquote>
+<blockquote>
+<p>生命不息， 探索不止， 后续将持续更新有关于go的技术探索</p>
+</blockquote>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[使用 Hugo 搭建博客]]></title>
         <id>https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/</id>
@@ -1003,712 +1305,5 @@ I/O 多路复用机制“模拟”出来的。Go 中的 net 库正是按照这�
 <p>作者： joellwang，腾讯 CSIG 后台开发工程师</p>
 <p>更多精彩，尽在 <a href="https://www.zhihu.com/org/teng-xun-ji-zhu-gong-cheng">腾讯技术</a></p>
 ]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Golang 面试题总结]]></title>
-        <id>https://ChicRingo.github.io/post/golang-mian-shi-ti/</id>
-        <link href="https://ChicRingo.github.io/post/golang-mian-shi-ti/">
-        </link>
-        <updated>2020-08-18T16:36:24.000Z</updated>
-        <summary type="html"><![CDATA[<p>总结的一些 Golang 面试中遇到的问题，更新中</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>总结的一些 Golang 面试中遇到的问题，更新中</p>
-<!-- more -->
-<ol>
-<li>
-<h2 id="go的goroutine为什么快">go的goroutine为什么快</h2>
-<p><strong>Goroutine 非常轻量</strong>，主要体现在以下两个方面：</p>
-<p><strong>上下文切换代价小：</strong> Goroutine 上下文切换只涉及到三个寄存器（PC / SP / DX）的值修改；而对比线程的上下文切换则需要涉及模式切换（从用户态切换到内核态）、以及 16 个寄存器、PC、SP…等寄存器的刷新；</p>
-<p>**内存占用少：**线程栈空间通常是 2M，Goroutine 栈空间最小 2K；</p>
-<p>Golang 程序中可以轻松支持<strong>10w 级别</strong>的 Goroutine 运行，而线程数量达到 1k 时，内存占用就已经达到 2G。</p>
-<p><strong>在 Go 程序里我们通过下面的图示来展示 G-P-M 模型：</strong></p>
-<figure data-type="image" tabindex="1"><img src="https://pic2.zhimg.com/80/v2-a39b9615c2a4dc7fc3a5af9ff93da828_1440w.jpg" alt="img" loading="lazy"></figure>
-<p>P 代表可以“并行”运行的逻辑处理器，每个 P 都被分配到一个系统线程 M，G 代表 Go 协程。</p>
-<p>Go 调度器中有两个不同的运行队列：<strong>全局运行队列(GRQ)和本地运行队列(LRQ)。</strong></p>
-<p>每个 P 都有一个 LRQ，用于管理分配给在 P 的上下文中执行的 Goroutines，这些 Goroutine 轮流被和 P 绑定的 M 进行上下文切换。GRQ 适用于尚未分配给 P 的 Goroutines。</p>
-<p>**从上图可以看出，G 的数量可以远远大于 M 的数量，换句话说，Go 程序可以利用少量的内核级线程来支撑大量 Goroutine 的并发。**多个 Goroutine 通过用户级别的上下文切换来共享内核线程 M 的计算资源，但对于操作系统来说并没有线程上下文切换产生的性能损耗。</p>
-<p><a href="https://zhuanlan.zhihu.com/p/111346689">Go 为什么这么“快”</a></p>
-</li>
-<li>
-<h2 id="红黑树的特点">红黑树的特点</h2>
-<ol>
-<li>
-<h4 id=""></h4>
-<blockquote>
-<ol>
-<li>每个节点非红即黑；</li>
-<li>根节点总是黑色的；</li>
-<li>每个叶子节点都是黑色的空节点（NIL节点）；</li>
-<li>如果节点是红色的，则它的子节点必须是黑色的（反之不一定）；</li>
-<li>从根节点到叶节点或空子节点的每条路径，必须包含相同数目的黑色节点（即相同的黑色高度）。</li>
-</ol>
-</blockquote>
-<figure data-type="image" tabindex="2"><img src="https://user-gold-cdn.xitu.io/2017/12/6/1602b6016e143cf3?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img" loading="lazy"></figure>
-<h5 id="红黑树的应用">红黑树的应用：</h5>
-<p>TreeMap、TreeSet以及JAVA8的HashMap底层都用到了红黑树。</p>
-<h5 id="红黑树自平衡调整方法">红黑树自平衡调整方法：</h5>
-<blockquote>
-<p><strong>变色</strong></p>
-</blockquote>
-<p>变色仅仅指的是红黑树节点的变色。因为红黑树节点必须是【红】或者【黑】这两中颜色，所以变色只是将当前的节点颜色进行变化，以满足特性（2，3，4，5）。</p>
-<blockquote>
-<p><strong>旋转</strong></p>
-</blockquote>
-<p>左旋操作动画（更加容易理解和记忆）：</p>
-<figure data-type="image" tabindex="3"><img src="https://img-blog.csdnimg.cn/20191224152932810.gif" alt="在这里插入图片描述" loading="lazy"></figure>
-<pre><code>/*************对红黑树节点x进行左旋操作 ******************/
-/* 左旋示意图：对节点x进行左旋 
- *     p                       p 
- *    /                       / 
- *   x                       y 
- *  / \                     / \ 
- * lx  y      -----&gt;       x  ry 
- *    / \                 / \ 
- *   ly ry               lx ly 
- * 左旋做了三件事： 
- * 1. 将y的左子节点赋给x的右子节点,并将x赋给y左子节点的父节点(y左子节点非空时) 
- * 2. 将x的父节点p(非空时)赋给y的父节点，同时更新p的子节点为y(左或右) 
- * 3. 将y的左子节点设为x，将x的父节点设为y 
- */
-</code></pre>
-<p>左旋操作动画</p>
-<figure data-type="image" tabindex="4"><img src="https://img-blog.csdnimg.cn/20191224153029893.gif" alt="在这里插入图片描述" loading="lazy"></figure>
-<pre><code>/*************对红黑树节点y进行右旋操作 ******************/
-/* 右旋示意图：对节点y进行右旋
- *        p                   p
- *       /                   /
- *      y                   x
- *     / \                 / \
- *    x  ry   -----&gt;      lx  y
- *   / \                     / \
- * lx  rx                   rx ry
- * 右旋做了三件事：
- * 1. 将x的右子节点赋给y的左子节点,并将y赋给x右子节点的父节点(x右子节点非空时)
- * 2. 将y的父节点p(非空时)赋给x的父节点，同时更新p的子节点为x(左或右)
- * 3. 将x的右子节点设为y，将y的父节点设为x
- */
-</code></pre>
-</li>
-</ol>
-<ul>
-<li>
-<h4 id="延伸为什么着色成红色而不是黑色呢为什么呢">延伸：为什么着色成红色，而不是黑色呢？为什么呢？</h4>
-</li>
-<li>
-<h5 id="红黑树节点的添加">红黑树节点的添加</h5>
-<ul>
-<li>红黑树的第 5 条特征规定，任一节点到它子树的每个叶子节点的路径中都包含同样数量的黑节点。也就是说当我们往红黑树中插入一个黑色节点时，会违背这条特征。</li>
-<li>同时第 4 条特征规定红色节点的左右孩子一定都是黑色节点，<strong>有可能</strong>当我们给一个红色节点下插入一个红色节点时，会违背这条特征。</li>
-<li>因此我们需要在插入黑色节点后进行结构调整，保证红黑树始终满足这 5 条特征。</li>
-</ul>
-</li>
-<li>
-<h5 id="红黑树插入后节点的调整思想">红黑树插入后节点的调整思想</h5>
-<p>我们插入黑色节点的时候担心违背第5条，插入红色节点时担心违背第4条，所以我们将将插入的节点<strong>改为红色</strong>，然后判断插入的节点的父亲是不是红色，是的话进行修改调整（变色、左旋、右旋）。同时在调整的过程中我们需要遵守<code>5条特性</code>。</p>
-</li>
-</ul>
-<p><strong>为什么要用红黑树？</strong></p>
-<p>简单来说红黑树就是为了解决二叉查找树的缺陷，因为二叉查找树在某些情况下会退化成一个线性结构。详细了解可以查看 <a href="https://juejin.im/post/5a27c6946fb9a04509096248">漫画：什么是红黑树？</a>（也介绍到了二叉查找树，非常推荐）</p>
-<p>推荐文章：</p>
-<ul>
-<li><a href="https://juejin.im/post/5a27c6946fb9a04509096248">漫画：什么是红黑树？</a>（也介绍到了二叉查找树，非常推荐）</li>
-<li><a href="http://dandanlove.com/2018/03/18/red-black-tree/">寻找红黑树的操作手册</a>（文章排版以及思路真的不错）</li>
-<li><a href="https://zhuanlan.zhihu.com/p/24367771">红黑树深入剖析及Java实现</a>（美团点评技术团队）</li>
-</ul>
-</li>
-<li>
-<h2 id="二叉树的特点">二叉树的特点</h2>
-<p>只有一个根节点，每个非根节点只有一个父节点</p>
-<blockquote>
-<ul>
-<li>叉树节点的子节点最多只能有两个</li>
-<li>二叉树有左右之分</li>
-</ul>
-</blockquote>
-<p><a href="https://baike.baidu.com/item/%E4%BA%8C%E5%8F%89%E6%A0%91">二叉树</a>（百度百科）</p>
-<p>(1)<a href="https://baike.baidu.com/item/%E5%AE%8C%E5%85%A8%E4%BA%8C%E5%8F%89%E6%A0%91">完全二叉树</a>——若设二叉树的高度为h，除第 h 层外，其它各层 (1～h-1) 的结点数都达到最大个数，第h层有叶子结点，并且叶子结点都是从左到右依次排布，这就是完全二叉树，不需要填满二叉树，比如</p>
-<figure data-type="image" tabindex="5"><img src="https://mmbiz.qpic.cn/mmbiz_png/frMsQia9rIXMyK0XoJlebciaYSDzrnHZib0w1jouSiaF0uibq7XZbKg6SOyKcNXJOgq9hOB1NegL0rttWEvXcSFxELA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="img" loading="lazy"></figure>
-<p>(2)<a href="https://baike.baidu.com/item/%E6%BB%A1%E4%BA%8C%E5%8F%89%E6%A0%91">满二叉树</a>——除了叶结点外，每一个结点都有左右子叶，且叶子结点都处在最底层的二叉树。</p>
-<figure data-type="image" tabindex="6"><img src="https://mmbiz.qpic.cn/mmbiz_png/frMsQia9rIXNbNiaBaYCDOdWLXFNLmPSWf9CibibBs6u2GPyUib0or10qwUZQD0V6IicJlhnPhEYopDLLuAuJ1IutZww/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="img" loading="lazy"></figure>
-<p>(3)<a href="https://baike.baidu.com/item/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91/10421057">平衡二叉树</a>——平衡二叉树又被称为AVL树（区别于AVL算法），它是一棵二叉排序树，且具有以下性质：它是一棵空树，或它的左右两个子树的高度差的绝对值不超过1，并且左右两个子树都是一棵平衡二叉树。</p>
-<h5 id="二叉查找树bst具备什么特性呢">二叉查找树（BST）具备什么特性呢？</h5>
-<ul>
-<li><strong>左</strong>子树上所有结点的值均<strong>小于或等于</strong>它的根结点的值。</li>
-<li><strong>右</strong>子树上所有结点的值均<strong>大于或等于</strong>它的根结点的值。</li>
-<li>左、右子树也分别为二叉排序树。</li>
-</ul>
-<p>缺陷：有可能会变成线性</p>
-<p>下图中这棵树，就是一颗典型的二叉查找树：</p>
-<figure data-type="image" tabindex="7"><img src="https://user-gold-cdn.xitu.io/2017/12/6/1602b600eb27d6ef?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img" loading="lazy"></figure>
-<h5 id="堆">堆</h5>
-<p><a href="https://blog.csdn.net/qq_33186366/article/details/51876191">数据结构之堆的定义</a></p>
-<p>堆是具有以下性质的完全二叉树：每个结点的值都大于或等于其左右孩子结点的值，称为大顶堆；或者每个结点的值都小于或等于其左右孩子结点的值，称为小顶堆。</p>
-</li>
-<li>
-<h4 id="如何快速建立一个平衡二叉树">如何快速建立一个平衡二叉树</h4>
-<ol>
-<li>
-<p><a href="https://baike.baidu.com/item/%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91">平衡二叉树</a>（百度百科，平衡二叉树的常用实现方法有红黑树、AVL、替罪羊树、Treap、伸展树等</p>
-<ul>
-<li>任意节点的左右子树的高度差都小于等于1。</li>
-<li>找最低失衡节点，那就是找从最底层（叶子节点层）往最高层（root层）中最先出现左右子树高度差大于1的节点。</li>
-<li>找替代节点就是找极值点，如果是左子树失衡，那就找左子树中的最大值，因为当左子树失衡时就表示我们不需要处理右子树，所以找到左子树的最大值，之后把右子树赋给该节点的右子节点即可。</li>
-<li>同理，如果是右子树失衡那就找右子树中的最小值。</li>
-</ul>
-</li>
-</ol>
-</li>
-<li>
-<h2 id="平衡二叉树的特点">平衡二叉树的特点</h2>
-<p>任意节点的左右子树的高度差都小于等于1。</p>
-</li>
-<li>
-<h2 id="树的层序遍历">树的层序遍历</h2>
-</li>
-<li>
-<h2 id="判断树是否左右对称或数组是否左右对称">判断树是否左右对称或数组是否左右对称</h2>
-</li>
-<li>
-<h2 id="linux常用命令">Linux常用命令</h2>
-<h5 id="目录切换命令">目录切换命令</h5>
-<ul>
-<li><strong><code>cd usr</code>：</strong> 切换到该目录下usr目录</li>
-<li><strong><code>cd ..（或cd../）</code>：</strong> 切换到上一层目录</li>
-<li><strong><code>cd /</code>：</strong> 切换到系统根目录</li>
-<li><strong><code>cd ~</code>：</strong> 切换到用户主目录</li>
-<li><strong><code>cd -</code>：</strong> 切换到上一个操作所在目录</li>
-</ul>
-<h5 id="目录的操作命令增删改查">目录的操作命令(增删改查)</h5>
-<ol>
-<li>
-<p><strong><code>mkdir 目录名称</code>：</strong> 增加目录</p>
-</li>
-<li>
-<p><strong><code>ls或者ll</code></strong>（ll是ls -l的别名，ll命令可以看到该目录下的所有目录和文件的详细信息）：查看目录信息</p>
-</li>
-<li>
-<p><strong><code>find 目录 参数</code>：</strong> 寻找目录（查）</p>
-<p>示例：</p>
-<ul>
-<li>列出当前目录及子目录下所有文件和文件夹: <code>find .</code></li>
-<li>在<code>/home</code>目录下查找以.txt结尾的文件名:<code>find /home -name &quot;*.txt&quot;</code></li>
-<li>同上，但忽略大小写: <code>find /home -iname &quot;*.txt&quot;</code></li>
-<li>当前目录及子目录下查找所有以.txt和.pdf结尾的文件:<code>find . \( -name &quot;*.txt&quot; -o -name &quot;*.pdf&quot; \)</code>或<code>find . -name &quot;*.txt&quot; -o -name &quot;*.pdf&quot;</code></li>
-</ul>
-</li>
-<li>
-<p><strong><code>mv 目录名称 新目录名称</code>：</strong> 修改目录的名称（改）</p>
-<p>注意：mv的语法不仅可以对目录进行重命名而且也可以对各种文件，压缩包等进行 重命名的操作。mv命令用来对文件或目录重新命名，或者将文件从一个目录移到另一个目录中。后面会介绍到mv命令的另一个用法。</p>
-</li>
-<li>
-<p><strong><code>mv 目录名称 目录的新位置</code>：</strong> 移动目录的位置---剪切（改）</p>
-<p>注意：mv语法不仅可以对目录进行剪切操作，对文件和压缩包等都可执行剪切操作。另外mv与cp的结果不同，mv好像文件“搬家”，文件个数并未增加。而cp对文件进行复制，文件个数增加了。</p>
-</li>
-<li>
-<p><strong><code>cp -r 目录名称 目录拷贝的目标位置</code>：</strong> 拷贝目录（改），-r代表递归拷贝</p>
-<p>注意：cp命令不仅可以拷贝目录还可以拷贝文件，压缩包等，拷贝文件和压缩包时不 用写-r递归</p>
-</li>
-<li>
-<p><strong><code>rm [-rf] 目录</code>:</strong> 删除目录（删）</p>
-<p>注意：rm不仅可以删除目录，也可以删除其他文件或压缩包，为了增强大家的记忆， 无论删除任何目录或文件，都直接使用<code>rm -rf</code> 目录/文件/压缩包</p>
-</li>
-</ol>
-</li>
-<li>
-<h2 id="http状态码">http状态码</h2>
-</li>
-</ol>
-<blockquote>
-<p>超文本传输协议（HTTP，HyperText Transfer Protocol)是互联网上应用最为广泛的一种网络协议。所有的 WWW（万维网） 文件都必须遵守这个标准。设计 HTTP 最初的目的是为了提供一种发布和接收 HTML 页面的方法。（百度百科）</p>
-</blockquote>
-<figure data-type="image" tabindex="8"><img src="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019/7/%E7%8A%B6%E6%80%81%E7%A0%81.png" alt="状态码" loading="lazy"></figure>
-<p><strong>常见的状态码有200,301,302,304,404,500,403。</strong></p>
-<blockquote>
-<p><strong>200</strong>：最常见，表示服务器响应成功，服务器找到了客户端请求的内容，并将内容发送给了客户端。</p>
-<p><strong>500</strong>：比较常见，表示程序错误，就是说请求的网页程序本身就报错了。现在的浏览器会对状态码500做出一定的处理，所以在一般情况下会返回一个定制的错误页面。</p>
-<p><strong>502</strong>：作为网关或者代理工作的服务器尝试执行请求时，从上游服务器接收到无效响应，</p>
-<p><strong>504</strong>：作为网关或者代理工作的服务器尝试执行请求时，未能及时从上游服务器（URI标识出的服务器，例如HTTP、FTP、LDAP）或者辅助服务器（例如DNS）收到响应</p>
-<p><strong>400</strong>：为包含语法错误，无法被服务器解析</p>
-<p><strong>403</strong>：为服务器已经接收请求，但是被拒绝执行</p>
-<p><strong>404</strong>：服务器上没有该资源，或者说是服务器上没有找到客户端请求的资源，是最常见的请求错误码。</p>
-<p><strong>301</strong>：临时跳转。url地址a可以向url地址b上跳转，但这并不意味着是永久性的，有可能过短时间就从url地址a跳转到地址c。</p>
-<p><strong>302</strong>：永久性的重定向。</p>
-<p><strong>304</strong>：被请求的资源内容没有发生更改。</p>
-</blockquote>
-<ol start="11">
-<li>
-<h2 id="tcp-udp区别">tcp udp区别</h2>
-</li>
-</ol>
-<p><strong>运输层主要使用以下两种协议:</strong></p>
-<pre><code>  1. **传输控制协议 TCP**（Transmission Control Protocol）--提供**面向连接**的，**可靠的**数据传输服务。
-  2. **用户数据协议 UDP**（User Datagram Protocol）--提供**无连接**的，尽最大努力的数据传输服务（**不保证数据传输的可靠性**）。
-</code></pre>
-<figure data-type="image" tabindex="9"><img src="https://my-blog-to-use.oss-cn-beijing.aliyuncs.com/2019-11/tcp-vs-udp.jpg" alt="TCP、UDP协议的区别" loading="lazy"></figure>
-<p>UDP 在传送数据之前不需要先建立连接，远地主机在收到 UDP 报文后，不需要给出任何确认。虽然 UDP 不提供可靠交付，但在某些情况下 UDP 确是一种最有效的工作方式（一般用于即时通信），比如： QQ 语音、 QQ 视频 、直播等等</p>
-<p>TCP 提供面向连接的服务。在传送数据之前必须先建立连接，数据传送结束后要释放连接。 TCP 不提供广播或多播服务。由于 TCP 要提供可靠的，面向连接的传输服务（TCP的可靠体现在TCP在传递数据之前，会有三次握手来建立连接，而且在数据传递时，有确认、窗口、重传、拥塞控制机制，在数据传完后，还会断开连接用来节约系统资源），这一难以避免增加了许多开销，如确认，流量控制，计时器以及连接管理等。这不仅使协议数据单元的首部增大很多，还要占用许多处理机资源。TCP 一般用于文件传输、发送和接收邮件、远程登录等场景。</p>
-<ol start="11">
-<li>
-<h2 id="三次握手四次挥手">三次握手四次挥手</h2>
-<figure data-type="image" tabindex="10"><img src="https://imgconvert.csdnimg.cn/aHR0cDovL2ltZy5ibG9nLmNzZG4ubmV0LzIwMTcwNjA1MTEwNDA1NjY2?x-oss-process=image/format,png" alt="三次握手" loading="lazy"></figure>
-<p><strong>三次握手过程：</strong></p>
-<blockquote>
-<ol>
-<li>客户端–发送带有 SYN 标志的数据包–一次握手–服务端</li>
-<li>服务端–发送带有 SYN/ACK 标志的数据包–二次握手–客户端</li>
-<li>客户端–发送带有带有 ACK 标志的数据包–三次握手–服务端</li>
-</ol>
-</blockquote>
-<p>当客户端和服务端通过三次握手建立了 TCP 连接以后，当数据传送完毕，断开连接就需要进行TCP的四次挥手。</p>
-<p><strong>四次挥手如下所示：</strong></p>
-<figure data-type="image" tabindex="11"><img src="https://imgconvert.csdnimg.cn/aHR0cDovL2ltZy5ibG9nLmNzZG4ubmV0LzIwMTcwNjA3MjA1NzU2MjU1?x-oss-process=image/format,png" alt="这里写图片描述" loading="lazy"></figure>
-<figure data-type="image" tabindex="12"><img src="https://imgconvert.csdnimg.cn/aHR0cDovL2ltZy5ibG9nLmNzZG4ubmV0LzIwMTcwNjA2MDg0ODUxMjcy?x-oss-process=image/format,png" alt="四次挥手" loading="lazy"></figure>
-<h5 id="断开一个-tcp-连接则需要四次挥手">断开一个 TCP 连接则需要“四次挥手”：</h5>
-<blockquote>
-<ol>
-<li>客户端-发送一个 FIN，用来关闭客户端到服务器的数据传送</li>
-<li>服务器-收到这个 FIN，它发回一 个 ACK，确认序号为收到的序号加1 。和 SYN 一样，一个 FIN 将占用一个序号</li>
-<li>服务器-关闭与客户端的连接，发送一个FIN给客户端</li>
-<li>客户端-发回 ACK 报文确认，并将确认序号设置为收到序号加1</li>
-</ol>
-</blockquote>
-<h5 id="为什么建立连接是三次握手关闭连接确是四次挥手呢">为什么建立连接是三次握手，关闭连接确是四次挥手呢？</h5>
-<p>建立连接的时候， 服务器在LISTEN状态下，收到建立连接请求的SYN报文后，把ACK和SYN放在一个报文里发送给客户端。<br>
-而关闭连接时，服务器收到对方的FIN报文时，仅仅表示对方不再发送数据了但是还能接收数据，而自己也未必全部数据都发送给对方了，所以己方可以立即关闭，也可以发送一些数据给对方后，再发送FIN报文给对方来表示同意现在关闭连接，因此，己方ACK和FIN一般都会分开发送，从而导致多了一次。</p>
-<p>上面讲的比较概括，推荐一篇讲的比较细致的文章：https://blog.csdn.net/qzcsu/article/details/72861891</p>
-</li>
-<li>
-<h2 id="快排思路">快排思路</h2>
-<h4 id="快排的思想">快排的思想：</h4>
-<p><strong>1.先从数组中取出一个数作为基准数；（第一个或者最后一个）</strong></p>
-<p><strong>2.分区过程，将比这个数大的数全部放到它的右边，小于或等于它的数全部放到它的左边；</strong></p>
-<p><strong>3.再对左右区间进行第二步，直到各区间只有一个数。</strong></p>
-<h4 id="快排思路-2"><strong>快排思路：</strong></h4>
-<p>可以用补洞思路来实现上边的快排思想，简单来说就是挖洞之后，补洞。</p>
-<p>挖一个洞来补洞，目的是要把数分到两边。</p>
-<figure data-type="image" tabindex="13"><img src="https:////upload-images.jianshu.io/upload_images/1829401-1728cff508f62f6f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1200/format/webp" alt="img" loading="lazy"></figure>
-<p>图一</p>
-<figure data-type="image" tabindex="14"><img src="https:////upload-images.jianshu.io/upload_images/1829401-a59f520690465285.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1200/format/webp" alt="img" loading="lazy"></figure>
-<p>图二</p>
-<p>执行完毕后，比基准数小的在左边，比基准数大的在右边。因此对这两部分重复这个歌步骤就可以了。</p>
-<p>注意：</p>
-<p>1.洞在左边代表左边部分已经排好都是比基准数小的，洞在右边代表右边部分已经排好都是比基准数大的。</p>
-<p>2.要补左边的洞从后往前比基准数小的，j递增；要补右边的洞从前往后比基准数大的，i递增。</p>
-<p>作者：frankisbaby<br>
-链接：https://www.jianshu.com/p/f01c64fd2f93<br>
-来源：简书<br>
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
-<h1 id="1-经典快速排序图示过程">1. 经典快速排序图示过程</h1>
-<h2 id="1-经典快速排序的总体流程">(1) 经典快速排序的总体流程</h2>
-<figure data-type="image" tabindex="15"><img src="https:////upload-images.jianshu.io/upload_images/7789414-fb94ab5405281f89.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1200/format/webp" alt="img" loading="lazy"></figure>
-<h2 id="2-根据基准值分区的过程">(2) 根据基准值分区的过程</h2>
-<p>在[<a href="https://www.jianshu.com/p/356604b8903f">算法题] 荷兰国旗问题</a>中有详细的介绍。</p>
-<h1 id="2-随机快速排序">2. 随机快速排序</h1>
-<p>经典快速排序总是指定数组或者某部分的最后一个元素作为基准值，随机快速排序指定数组或者某一部分中的随机值作为基准值。</p>
-<h1 id="3-动图展示">3. 动图展示</h1>
-<p>作者：CoderJed<br>
-链接：https://www.jianshu.com/p/a68f72278f8f<br>
-来源：简书<br>
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
-<p>动画演示：https://github.com/lzever/animationSort</p>
-</li>
-<li>
-<h2 id="快慢指针问题">快慢指针问题</h2>
-</li>
-<li>
-<h2 id="http10和-http11的区别及状态码">http1.0和 http1.1的区别及状态码</h2>
-<p><strong>HTTP的特点：</strong></p>
-<blockquote>
-<p>支持客户端、服务器端模式，简单快速，客户端向服务器端请求服务时，只需传送请求方法和路径，灵活，HTTP允许传输任意类型的数据对象，无连接，限制每次连接只处理一个请求，无状态，HTTP协议是无状态协议，指明协议对于事务处理没有记忆能力。</p>
-</blockquote>
-<blockquote>
-<p>HTTP都是由客户端发起请求的，并且由服务器端回应响应消息的。</p>
-</blockquote>
-<blockquote>
-<p>灵活，我们知道允许可以任何类型的数据对象，包括音频，视频，图片，文件等等。</p>
-</blockquote>
-<blockquote>
-<p>无状态，HTTP就是说，每次HTTP请求都是独立的，任何两个请求之间没有必然的联系。</p>
-</blockquote>
-<blockquote>
-<p>无连接的，每次服务器在处理完客户端的请求后，并收到客户的应答后，就断开了通信，当客户端再次发送请求时就是一个新的连接，采用这种方式可以节省传输时间。</p>
-<p>**这是HTTP/1.0版的主要缺点，**每个TCP连接只能发送一个请求，发送数据完毕后，连接就关闭了，如果还要请求就必须要新建一个请求连接。</p>
-</blockquote>
-<p>HTTP是一种不保存状态，无状态协议，协议对于发送过来的请求或是响应都不做持久化处理。</p>
-<p>HTTP1.1虽然是无状态协议，但是为了实现期望的保持状态功能，于是引入了Cookie技术，有了Cookie，和HTTP协议通信，就可以管理状态了。</p>
-<img src="https://user-gold-cdn.xitu.io/2019/12/25/16f3cf564dbef1a1?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img" style="zoom: 50%;" />
-<img src="https://user-gold-cdn.xitu.io/2019/12/25/16f3cf5650eb55e8?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img" style="zoom: 50%;" />
-<p><strong>TCP连接的新建成本很高，因为需要客户端和服务器端三次握手。</strong></p>
-<p>**交流的简单流程：**客户端发起连接，客户端发起请求，服务器端响应请求，服务器端关闭连接。</p>
-<p>HTTP、1.1版本是最流行的版本，可以持久连接，TCP连接默认不关闭，可以被多个请求复用，只有在一段时间内，没有请求，就可以自动关闭。</p>
-<h5 id="http10和http11区别">HTTP1.0和HTTP1.1区别：</h5>
-<blockquote>
-<p>这部分回答引用这篇文章 https://www.jianshu.com/p/be29d679cbff 的一些内容。</p>
-</blockquote>
-<ol>
-<li><strong>长连接</strong> : <strong>在HTTP/1.0中，默认使用的是短连接</strong>，也就是说每次请求都要重新建立一次连接。HTTP 是基于TCP/IP协议的,每一次建立或者断开连接都需要三次握手四次挥手的开销，如果每次请求都要这样的话，开销会比较大。因此最好能维持一个长连接，可以用个长连接来发多个请求。<strong>HTTP 1.1起，默认使用长连接</strong> ,默认开启Connection： keep-alive。 <strong>HTTP/1.1的持续连接有非流水线方式和流水线方式</strong> 。流水线方式是客户在收到HTTP的响应报文之前就能接着发送新的请求报文。与之相对应的非流水线方式是客户在收到前一个响应后才能发送下一个请求。<strong>HTTP协议的长连接和短连接，实质上是TCP协议的长连接和短连接。</strong></li>
-<li><strong>错误状态响应码</strong> :在HTTP1.1中新增了24个错误状态响应码，如409（Conflict）表示请求的资源与资源的当前状态发生冲突；410（Gone）表示服务器上的某个资源被永久性的删除。</li>
-<li><strong>缓存处理</strong> :在HTTP1.0中主要使用header里的If-Modified-Since,Expires来做为缓存判断的标准，HTTP1.1则引入了更多的缓存控制策略例如Entity tag，If-Unmodified-Since, If-Match, If-None-Match等更多可供选择的缓存头来控制缓存策略。</li>
-<li><strong>带宽优化及网络连接的使用</strong> :HTTP1.0中，存在一些浪费带宽的现象，例如客户端只是需要某个对象的一部分，而服务器却将整个对象送过来了，并且不支持断点续传功能，HTTP1.1则在请求头引入了range头域，它允许只请求资源的某个部分，即返回码是206（Partial Content），这样就方便了开发者自由的选择以便于充分利用带宽和连接。</li>
-<li><strong>Host头处理</strong>，在HTTP1.0中认为每台服务器都绑定一个唯一的IP地址，因此，请求消息中的URL并没有传递主机名（hostname）。但随着虚拟主机技术的发展，在一台物理服务器上可以存在多个虚拟主机（Multi-homed Web Servers），并且它们共享一个IP地址。HTTP1.1的请求消息和响应消息都应支持Host头域，且请求消息中如果没有Host头域会报告一个错误（400 Bad Request）。</li>
-</ol>
-<blockquote>
-<p>延伸HTTP 2.0</p>
-</blockquote>
-<p><strong>HTTP2.0和HTTP1.X相比的新特性</strong>：</p>
-<ul>
-<li><strong>新的二进制格式</strong>（Binary Format），HTTP1.x的解析是基于文本。基于文本协议的格式解析存在天然缺陷，文本的表现形式有多样性，要做到健壮性考虑的场景必然很多，二进制则不同，只认0和1的组合。基于这种考虑HTTP2.0的协议解析决定采用二进制格式，实现方便且健壮。</li>
-<li><strong>多路复用</strong>（MultiPlexing），即连接共享，即每一个request都是是用作连接共享机制的。一个request对应一个id，这样一个连接上可以有多个request，每个连接的request可以随机的混杂在一起，接收方可以根据request的 id将request再归属到各自不同的服务端请求里面。</li>
-<li><strong>header压缩</strong>，如上文中所言，对前面提到过HTTP1.x的header带有大量信息，而且每次都要重复发送，HTTP2.0使用encoder来减少需要传输的header大小，通讯双方各自cache一份header fields表，既避免了重复header的传输，又减小了需要传输的大小。</li>
-<li><strong>服务端推送</strong>（server push），同SPDY一样，HTTP2.0也具有server push功能。</li>
-</ul>
-<p><strong>HTTP2.0的升级改造</strong></p>
-<ul>
-<li>前文说了HTTP2.0其实可以支持非HTTPS的，但是现在主流的浏览器像chrome，firefox表示还是只支持基于 TLS 部署的HTTP2.0协议，所以要想升级成HTTP2.0还是先升级HTTPS为好。</li>
-<li>当你的网站已经升级HTTPS之后，那么升级HTTP2.0就简单很多，如果你使用NGINX，只要在配置文件中启动相应的协议就可以了，可以参考<strong>NGINX白皮书，NGINX配置HTTP2.0官方指南</strong> https://www.nginx.com/blog/nginx-1-9-5/。</li>
-<li>使用了HTTP2.0那么，原本的HTTP1.x怎么办，这个问题其实不用担心，HTTP2.0完全兼容HTTP1.x的语义，对于不支持HTTP2.0的浏览器，NGINX会自动向下兼容的。</li>
-</ul>
-<p><strong>HTTP2.0的多路复用和HTTP1.X中的长连接复用有什么区别？</strong></p>
-<ul>
-<li>HTTP/1.* 一次请求-响应，建立一个连接，用完关闭；每一个请求都要建立一个连接；</li>
-<li>HTTP/1.1 Pipeling解决方式为，若干个请求排队串行化单线程处理，后面的请求等待前面请求的返回才能获得执行机会，一旦有某请求超时等，后续请求只能被阻塞，毫无办法，也就是人们常说的线头阻塞；</li>
-<li>HTTP/2多个请求可同时在一个连接上并行执行。某个请求任务耗时严重，不会影响到其它连接的正常执行；<br>
-具体如图：</li>
-</ul>
-<img src="http://mmbiz.qpic.cn/mmbiz_png/cmOLumrNib1cfBOtIMQ6JfSibJdd6QkQriba5ygCTOOjIQH4wvoJS2iaFBseyEAUfvpJQThHmTjuGuaSspUo8xppiaA/640?wx_fmt=png&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="img" style="zoom: 80%;" />
-<p><strong>为什么需要头部压缩？</strong><br>
-假定一个页面有100个资源需要加载（这个数量对于今天的Web而言还是挺保守的）, 而每一次请求都有1kb的消息头（这同样也并不少见，因为Cookie和引用等东西的存在）, 则至少需要多消耗100kb来获取这些消息头。HTTP2.0可以维护一个字典，差量更新HTTP头部，大大降低因头部传输产生的流量。具体参考：HTTP/2 头部压缩技术介绍</p>
-<p><strong>HTTP2.0多路复用有多好？</strong><br>
-HTTP 性能优化的关键并不在于高带宽，而是低延迟。TCP 连接会随着时间进行自我「调谐」，起初会限制连接的最大速度，如果数据成功传输，会随着时间的推移提高传输的速度。这种调谐则被称为 TCP 慢启动。由于这种原因，让原本就具有突发性和短时性的 HTTP 连接变的十分低效。<br>
-HTTP/2 通过让所有数据流共用同一个连接，可以更有效地使用 TCP 连接，让高带宽也能真正的服务于 HTTP 的性能提升。</p>
-</li>
-<li>
-<h2 id="http和https的区别">http和https的区别</h2>
-<img src="https://user-gold-cdn.xitu.io/2019/3/13/169759640707ca8a?imageView2/0/w/1280/h/960/format/webp/ignore-error/1" alt="img" style="zoom:50%;" />
-<ol>
-<li>
-<p>HTTPS协议需要到CA申请证书，一般免费证书很少，需要交费。</p>
-</li>
-<li>
-<p>HTTPS可以有效的防止运营商劫持，解决了防劫持的一个大问题。</p>
-</li>
-<li>
-<p><strong>端口</strong> ：</p>
-<p>HTTP的URL由“http://”起始且默认使用<strong>端口80</strong>，而HTTPS的URL由“https://”起始且默认使用<strong>端口443</strong>。</p>
-</li>
-<li>
-<p>安全性和资源消耗：</p>
-<p>HTTP协议运行在TCP之上，所有传输的内容都是明文，客户端和服务器端都无法验证对方的身份。HTTPS是<strong>运行在SSL/TLS之上</strong>的HTTP协议，SSL/TLS <strong>运行在TCP之上</strong>。所有传输的内容都经过加密，加密采用对称加密，但对称加密的密钥用服务器方的证书进行了非对称加密。所以说，HTTP 安全性没有 HTTPS高，但是 HTTPS 比HTTP耗费更多服务器资源。</p>
-<ul>
-<li>对称加密：密钥只有一个，加密解密为同一个密码，且加解密速度快，典型的对称加密算法有DES、AES等；</li>
-<li>非对称加密：密钥成对出现（且根据公钥无法推知私钥，根据私钥也无法推知公钥），加密解密使用不同密钥（公钥加密需要私钥解密，私钥加密需要公钥解密），相对对称加密速度较慢，典型的非对称加密算法有RSA、DSA等。</li>
-</ul>
-</li>
-</ol>
-</li>
-<li>
-<h2 id="redis缓存雪崩-缓存穿透-缓存击穿">redis缓存雪崩、缓存穿透、缓存击穿</h2>
-<h4 id="1-什么是缓存穿透">1. 什么是缓存穿透？</h4>
-<p>缓存穿透说简单点就是大量请求的 key 根本不存在于缓存中，导致请求直接到了数据库上，根本没有经过缓存这一层。举个例子：某个黑客故意制造我们缓存中不存在的 key 发起大量请求，导致大量请求落到数据库。</p>
-<h4 id="2-缓存穿透情况的处理流程是怎样的">2. 缓存穿透情况的处理流程是怎样的？</h4>
-<p>如下图所示，用户的请求最终都要跑到数据库中查询一遍。</p>
-<img src="https://snailclimb.gitee.io/javaguide/docs/database/Redis/images/redis-all/%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F%E6%83%85%E5%86%B5.png" alt="缓存穿透情况" style="zoom: 80%;" />
-<h4 id="3-有哪些解决办法">3. 有哪些解决办法？</h4>
-<p>最基本的就是首先做好参数校验，一些不合法的参数请求直接抛出异常信息返回给客户端。比如查询的数据库 id 不能小于 0、传入的邮箱格式不对的时候直接返回错误消息给客户端等等。</p>
-<p><strong>1）缓存无效 key</strong></p>
-<p>如果缓存和数据库都查不到某个 key 的数据就写一个到 Redis 中去并设置过期时间，具体命令如下： <code>SET key value EX 10086</code> 。这种方式可以解决请求的 key 变化不频繁的情况，如果黑客恶意攻击，每次构建不同的请求 key，会导致 Redis 中缓存大量无效的 key 。很明显，这种方案并不能从根本上解决此问题。如果非要用这种方式来解决穿透问题的话，尽量将无效的 key 的过期时间设置短一点比如 1 分钟。</p>
-<p>另外，这里多说一嘴，一般情况下我们是这样设计 key 的： <code>表名:列名:主键名:主键值</code> 。</p>
-<p><strong>2）布隆过滤器</strong></p>
-<p>布隆过滤器是一个非常神奇的数据结构，通过它我们可以非常方便地判断一个给定数据是否存在于海量数据中。我们需要的就是判断 key 是否合法，有没有感觉布隆过滤器就是我们想要找的那个“人”。</p>
-<p>具体是这样做的：把所有可能存在的请求的值都存放在布隆过滤器中，当用户请求过来，先判断用户发来的请求的值是否存在于布隆过滤器中。不存在的话，直接返回请求参数错误信息给客户端，存在的话才会走下面的流程。</p>
-<p>加入布隆过滤器之后的缓存处理流程图如下。</p>
-<figure data-type="image" tabindex="16"><img src="https://snailclimb.gitee.io/javaguide/docs/database/Redis/images/redis-all/%E5%8A%A0%E5%85%A5%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E5%90%8E%E7%9A%84%E7%BC%93%E5%AD%98%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B.png" alt="image" loading="lazy"></figure>
-<p>但是，需要注意的是布隆过滤器可能会存在误判的情况。总结来说就是： <strong>布隆过滤器说某个元素存在，小概率会误判。布隆过滤器说某个元素不在，那么这个元素一定不在。</strong></p>
-<p><em>为什么会出现误判的情况呢? 我们还要从布隆过滤器的原理来说！</em></p>
-<p>我们先来看一下，<strong>当一个元素加入布隆过滤器中的时候，会进行哪些操作：</strong></p>
-<ol>
-<li>使用布隆过滤器中的哈希函数对元素值进行计算，得到哈希值（有几个哈希函数得到几个哈希值）。</li>
-<li>根据得到的哈希值，在位数组中把对应下标的值置为 1。</li>
-</ol>
-<p>我们再来看一下，<strong>当我们需要判断一个元素是否存在于布隆过滤器的时候，会进行哪些操作：</strong></p>
-<ol>
-<li>对给定元素再次进行相同的哈希计算；</li>
-<li>得到值之后判断位数组中的每个元素是否都为 1，如果值都为 1，那么说明这个值在布隆过滤器中，如果存在一个值不为 1，说明该元素不在布隆过滤器中。</li>
-</ol>
-<p>然后，一定会出现这样一种情况：<strong>不同的字符串可能哈希出来的位置相同。</strong> （可以适当增加位数组大小或者调整我们的哈希函数来降低概率）</p>
-<p>更多关于布隆过滤器的内容可以看我的这篇原创：<a href="https://github.com/Snailclimb/JavaGuide/blob/master/docs/dataStructures-algorithms/data-structure/bloom-filter.md">《不了解布隆过滤器？一文给你整的明明白白！》</a> ，强烈推荐，个人感觉网上应该找不到总结的这么明明白白的文章了。</p>
-<h4 id="1-什么是缓存雪崩">1. 什么是缓存雪崩？</h4>
-<p>我发现缓存雪崩这名字起的有点意思，哈哈。</p>
-<p>实际上，缓存雪崩描述的就是这样一个简单的场景：<strong>缓存在同一时间大面积的失效，后面的请求都直接落到了数据库上，造成数据库短时间内承受大量请求。</strong> 这就好比雪崩一样，摧枯拉朽之势，数据库的压力可想而知，可能直接就被这么多请求弄宕机了。</p>
-<p>举个例子：系统的缓存模块出了问题比如宕机导致不可用。造成系统的所有访问，都要走数据库。</p>
-<p>还有一种缓存雪崩的场景是：<strong>有一些被大量访问数据（热点缓存）在某一时刻大面积失效，导致对应的请求直接落到了数据库上。</strong> 这样的情况，有下面几种解决办法：</p>
-<p>举个例子 ：秒杀开始 12 个小时之前，我们统一存放了一批商品到 Redis 中，设置的缓存过期时间也是 12 个小时，那么秒杀开始的时候，这些秒杀的商品的访问直接就失效了。导致的情况就是，相应的请求直接就落到了数据库上，就像雪崩一样可怕。</p>
-<h4 id="2-有哪些解决办法">2. 有哪些解决办法？</h4>
-<p><strong>针对 Redis 服务不可用的情况：</strong></p>
-<ol>
-<li>采用 Redis 集群，避免单机出现问题整个缓存服务都没办法使用。</li>
-<li>限流，避免同时处理大量的请求。</li>
-</ol>
-<p><strong>针对热点缓存失效的情况：</strong></p>
-<ol>
-<li>设置不同的失效时间比如随机设置缓存的失效时间。</li>
-<li>缓存永不失效。</li>
-</ol>
-</li>
-<li>
-<h2 id="分布式锁的实现方式">分布式锁的实现方式</h2>
-<h2 id="为何需要分布式锁">为何需要分布式锁</h2>
-<p>一般情况下，我们使用分布式锁主要有两个场景：</p>
-<ol>
-<li><strong>避免不同节点重复相同的工作</strong>：比如用户执行了某个操作有可能不同节点会发送多封邮件；</li>
-<li><strong>避免破坏数据的正确性</strong>：如果两个节点在同一条数据上同时进行操作，可能会造成数据错误或不一致的情况出现；</li>
-</ol>
-<h2 id="redis-分布式锁的问题">Redis 分布式锁的问题</h2>
-<h3 id="1锁超时">1）锁超时</h3>
-<p>假设现在我们有两台平行的服务 A B，其中 A 服务在 <strong>获取锁之后</strong> 由于未知神秘力量突然 <strong>挂了</strong>，那么 B 服务就永远无法获取到锁了：</p>
-<figure data-type="image" tabindex="17"><img src="https://upload-images.jianshu.io/upload_images/7896890-4ea386c23ef0eec9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="img" loading="lazy"></figure>
-<p>所以我们需要额外设置一个超时时间，来保证服务的可用性。</p>
-<p>但是另一个问题随即而来：<strong>如果在加锁和释放锁之间的逻辑执行得太长，以至于超出了锁的超时限制</strong>，也会出现问题。因为这时候第一个线程持有锁过期了，而临界区的逻辑还没有执行完，与此同时第二个线程就提前拥有了这把锁，导致临界区的代码不能得到严格的串行执行。</p>
-<p>为了避免这个问题，<strong>Redis 分布式锁不要用于较长时间的任务</strong>。如果真的偶尔出现了问题，造成的数据小错乱可能就需要人工的干预。</p>
-<p>有一个稍微安全一点的方案是 <strong>将锁的 <code>value</code> 值设置为一个随机数</strong>，释放锁时先匹配随机数是否一致，然后再删除 key，这是为了 <strong>确保当前线程占有的锁不会被其他线程释放</strong>，除非这个锁是因为过期了而被服务器自动释放的。</p>
-<p>但是匹配 <code>value</code> 和删除 <code>key</code> 在 Redis 中并不是一个原子性的操作，也没有类似保证原子性的指令，所以可能需要使用像 Lua 这样的脚本来处理了，因为 Lua 脚本可以 <strong>保证多个指令的原子性执行</strong>。</p>
-<h3 id="延伸的讨论gc-可能引发的安全问题">延伸的讨论：GC 可能引发的安全问题</h3>
-<p><a href="https://martin.kleppmann.com/">Martin Kleppmann</a> 曾与 Redis 之父 Antirez 就 Redis 实现分布式锁的安全性问题进行过深入的讨论，其中有一个问题就涉及到 <strong>GC</strong>。</p>
-<p>熟悉 Java 的同学肯定对 GC 不陌生，在 GC 的时候会发生 <strong>STW(Stop-The-World)</strong>，这本身是为了保障垃圾回收器的正常执行，但可能会引发如下的问题：</p>
-<figure data-type="image" tabindex="18"><img src="https://upload-images.jianshu.io/upload_images/7896890-cf3a403968a23be4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="img" loading="lazy"></figure>
-<p>服务 A 获取了锁并设置了超时时间，但是服务 A 出现了 STW 且时间较长，导致了分布式锁进行了超时释放，在这个期间服务 B 获取到了锁，待服务 A STW 结束之后又恢复了锁，这就导致了 <strong>服务 A 和服务 B 同时获取到了锁</strong>，这个时候分布式锁就不安全了。</p>
-<p>不仅仅局限于 Redis，Zookeeper 和 MySQL 有同样的问题。</p>
-<p>想吃更多瓜的童鞋，可以访问下列网站看看 Redis 之父 Antirez 怎么说：http://antirez.com/news/101</p>
-</li>
-<li>
-<h2 id="redis有哪些数据类型及其应用场景">redis有哪些数据类型及其应用场景</h2>
-<h4 id="1-string">1. string</h4>
-<ol>
-<li><strong>介绍</strong> ：string 数据结构是简单的 key-value 类型。虽然 Redis 是用 C 语言写的，但是 Redis 并没有使用 C 的字符串表示，而是自己构建了一种 <strong>简单动态字符串</strong>（simple dynamic string，<strong>SDS</strong>）。相比于 C 的原生字符串，Redis 的 SDS 不光可以保存文本数据还可以保存二进制数据，并且获取字符串长度复杂度为 O(1)（C 字符串为 O(N)）,除此之外,Redis 的 SDS API 是安全的，不会造成缓冲区溢出。</li>
-<li><strong>常用命令:</strong> <code>set,get,strlen,exists,dect,incr,setex</code> 等等。</li>
-<li><strong>应用场景</strong> ：一般常用在需要计数的场景，比如用户的访问次数、热点文章的点赞转发数量等等。</li>
-</ol>
-<p><strong>普通字符串的基本操作：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; set key value #设置 key-value 类型的值
-OK
-127.0.0.1:6379&gt; get key # 根据 key 获得对应的 value
-&quot;value&quot;
-127.0.0.1:6379&gt; exists key  # 判断某个 key 是否存在
-(integer) 1
-127.0.0.1:6379&gt; strlen key # 返回 key 所储存的字符串值的长度。
-(integer) 5
-127.0.0.1:6379&gt; del key # 删除某个 key 对应的值
-(integer) 1
-127.0.0.1:6379&gt; get key
-(nil)Copy to clipboardErrorCopied
-</code></pre>
-<p><strong>批量设置</strong> :</p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; mset key1 value1 key2 value2 # 批量设置 key-value 类型的值
-OK
-127.0.0.1:6379&gt; mget key1 key2 # 批量获取多个 key 对应的 value
-1) &quot;value1&quot;
-2) &quot;value2&quot;Copy to clipboardErrorCopied
-</code></pre>
-<p><strong>计数器（字符串的内容为整数的时候可以使用）：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; set number 1
-OK
-127.0.0.1:6379&gt; incr number # 将 key 中储存的数字值增一
-(integer) 2
-127.0.0.1:6379&gt; get number
-&quot;2&quot;
-127.0.0.1:6379&gt; decr number # 将 key 中储存的数字值减一
-(integer) 1
-127.0.0.1:6379&gt; get number
-&quot;1&quot;Copy to clipboardErrorCopied
-</code></pre>
-<p><strong>过期</strong>：</p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; expire key  60 # 数据在 60s 后过期
-(integer) 1
-127.0.0.1:6379&gt; setex key 60 value # 数据在 60s 后过期 (setex:[set] + [ex]pire)
-OK
-127.0.0.1:6379&gt; ttl key # 查看数据还有多久过期
-(integer) 56Copy to clipboardErrorCopied
-</code></pre>
-<h4 id="2-list">2. list</h4>
-<ol>
-<li><strong>介绍</strong> ：<strong>list</strong> 即是 <strong>链表</strong>。链表是一种非常常见的数据结构，特点是易于数据元素的插入和删除并且且可以灵活调整链表长度，但是链表的随机访问困难。许多高级编程语言都内置了链表的实现比如 Java 中的 <strong>LinkedList</strong>，但是 C 语言并没有实现链表，所以 Redis 实现了自己的链表数据结构。Redis 的 list 的实现为一个 <strong>双向链表</strong>，即可以支持反向查找和遍历，更方便操作，不过带来了部分额外的内存开销。</li>
-<li><strong>常用命令:</strong> <code>rpush,lpop,lpush,rpop,lrange、llen</code> 等。</li>
-<li><strong>应用场景:</strong> 发布与订阅或者说消息队列、慢查询。</li>
-</ol>
-<p>下面我们简单看看它的使用！</p>
-<p><strong>通过 <code>rpush/lpop</code> 实现队列：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; rpush myList value1 # 向 list 的头部（右边）添加元素
-(integer) 1
-127.0.0.1:6379&gt; rpush myList value2 value3 # 向list的头部（最右边）添加多个元素
-(integer) 3
-127.0.0.1:6379&gt; lpop myList # 将 list的尾部(最左边)元素取出
-&quot;value1&quot;
-127.0.0.1:6379&gt; lrange myList 0 1 # 查看对应下标的list列表， 0 为 start,1为 end
-1) &quot;value2&quot;
-2) &quot;value3&quot;
-127.0.0.1:6379&gt; lrange myList 0 -1 # 查看列表中的所有元素，-1表示倒数第一
-1) &quot;value2&quot;
-2) &quot;value3&quot;Copy to clipboardErrorCopied
-</code></pre>
-<p><strong>通过 <code>rpush/rpop</code> 实现栈：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; rpush myList2 value1 value2 value3
-(integer) 3
-127.0.0.1:6379&gt; rpop myList2 # 将 list的头部(最右边)元素取出
-&quot;value3&quot;Copy to clipboardErrorCopied
-</code></pre>
-<p>我专门花了一个图方便小伙伴们来理解：</p>
-<img src="https://snailclimb.gitee.io/javaguide/docs/database/Redis/images/redis-all/redis-list.png" alt="redis list" style="zoom: 80%;" />
-<p><strong>通过 <code>lrange</code> 查看对应下标范围的列表元素：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; rpush myList value1 value2 value3
-(integer) 3
-127.0.0.1:6379&gt; lrange myList 0 1 # 查看对应下标的list列表， 0 为 start,1为 end
-1) &quot;value1&quot;
-2) &quot;value2&quot;
-127.0.0.1:6379&gt; lrange myList 0 -1 # 查看列表中的所有元素，-1表示倒数第一
-1) &quot;value1&quot;
-2) &quot;value2&quot;
-3) &quot;value3&quot;Copy to clipboardErrorCopied
-</code></pre>
-<p>通过 <code>lrange</code> 命令，你可以基于 list 实现分页查询，性能非常高！</p>
-<p><strong>通过 <code>llen</code> 查看链表长度：</strong></p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; llen myList
-(integer) 3Copy to clipboardErrorCopied
-</code></pre>
-<h4 id="3-hash">3. hash</h4>
-<ol>
-<li><strong>介绍</strong> ：hash 类似于 JDK1.8 前的 HashMap，内部实现也差不多(数组 + 链表)。不过，Redis 的 hash 做了更多优化。另外，hash 是一个 string 类型的 field 和 value 的映射表，<strong>特别适合用于存储对象</strong>，后续操作的时候，你可以直接仅仅修改这个对象中的某个字段的值。 比如我们可以 hash 数据结构来存储用户信息，商品信息等等。</li>
-<li><strong>常用命令：</strong> <code>hset,hmset,hexists,hget,hgetall,hkeys,hvals</code> 等。</li>
-<li><strong>应用场景:</strong> 系统中对象数据的存储。</li>
-</ol>
-<p>下面我们简单看看它的使用！</p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; hset userInfoKey name &quot;guide&quot; description &quot;dev&quot; age &quot;24&quot;
-OK
-127.0.0.1:6379&gt; hexists userInfoKey name # 查看 key 对应的 value中指定的字段是否存在。
-(integer) 1
-127.0.0.1:6379&gt; hget userInfoKey name # 获取存储在哈希表中指定字段的值。
-&quot;guide&quot;
-127.0.0.1:6379&gt; hget userInfoKey age
-&quot;24&quot;
-127.0.0.1:6379&gt; hgetall userInfoKey # 获取在哈希表中指定 key 的所有字段和值
-1) &quot;name&quot;
-2) &quot;guide&quot;
-3) &quot;description&quot;
-4) &quot;dev&quot;
-5) &quot;age&quot;
-6) &quot;24&quot;
-127.0.0.1:6379&gt; hkeys userInfoKey # 获取 key 列表
-1) &quot;name&quot;
-2) &quot;description&quot;
-3) &quot;age&quot;
-127.0.0.1:6379&gt; hvals userInfoKey # 获取 value 列表
-1) &quot;guide&quot;
-2) &quot;dev&quot;
-3) &quot;24&quot;
-127.0.0.1:6379&gt; hset userInfoKey name &quot;GuideGeGe&quot; # 修改某个字段对应的值
-127.0.0.1:6379&gt; hget userInfoKey name
-&quot;GuideGeGe&quot;Copy to clipboardErrorCopied
-</code></pre>
-<h4 id="4-set">4. set</h4>
-<ol>
-<li><strong>介绍 ：</strong> set 类似于 Java 中的 <code>HashSet</code> 。Redis 中的 set 类型是一种无序集合，集合中的元素没有先后顺序。当你需要存储一个列表数据，又不希望出现重复数据时，set 是一个很好的选择，并且 set 提供了判断某个成员是否在一个 set 集合内的重要接口，这个也是 list 所不能提供的。可以基于 set 轻易实现交集、并集、差集的操作。比如：你可以将一个用户所有的关注人存在一个集合中，将其所有粉丝存在一个集合。Redis 可以非常方便的实现如共同关注、共同粉丝、共同喜好等功能。这个过程也就是求交集的过程。</li>
-<li><strong>常用命令：</strong> <code>sadd,spop,smembers,sismember,scard,sinterstore,sunion</code> 等。</li>
-<li><strong>应用场景:</strong> 需要存放的数据不能重复以及需要获取多个数据源交集和并集等场景</li>
-</ol>
-<p>下面我们简单看看它的使用！</p>
-<pre><code class="language-bash">127.0.0.1:6379&gt; sadd mySet value1 value2 # 添加元素进去
-(integer) 2
-127.0.0.1:6379&gt; sadd mySet value1 # 不允许有重复元素
-(integer) 0
-127.0.0.1:6379&gt; smembers mySet # 查看 set 中所有的元素
-1) &quot;value1&quot;
-2) &quot;value2&quot;
-127.0.0.1:6379&gt; scard mySet # 查看 set 的长度
-(integer) 2
-127.0.0.1:6379&gt; sismember mySet value1 # 检查某个元素是否存在set 中，只能接收单个元素
-(integer) 1
-127.0.0.1:6379&gt; sadd mySet2 value2 value3
-(integer) 2
-127.0.0.1:6379&gt; sinterstore mySet3 mySet mySet2 # 获取 mySet 和 mySet2 的交集并存放在 mySet3 中
-(integer) 1
-127.0.0.1:6379&gt; smembers mySet3
-1) &quot;value2&quot;Copy to clipboardErrorCopied
-</code></pre>
-<h4 id="5-sorted-set">5. sorted set</h4>
-<ol>
-<li><strong>介绍：</strong> 和 set 相比，sorted set 增加了一个权重参数 score，使得集合中的元素能够按 score 进行有序排列，还可以通过 score 的范围来获取元素的列表。有点像是 Java 中 HashMap 和 TreeSet 的结合体。</li>
-<li><strong>常用命令：</strong> <code>zadd,zcard,zscore,zrange,zrevrange,zrem</code> 等。</li>
-<li><strong>应用场景：</strong> 需要对数据根据某个权重进行排序的场景。比如在直播系统中，实时排行信息包含直播间在线用户列表，各种礼物排行榜，弹幕消息（可以理解为按消息维度的消息排行榜）等信息。</li>
-</ol>
-<pre><code class="language-bash">127.0.0.1:6379&gt; zadd myZset 3.0 value1 # 添加元素到 sorted set 中 3.0 为权重
-(integer) 1
-127.0.0.1:6379&gt; zadd myZset 2.0 value2 1.0 value3 # 一次添加多个元素
-(integer) 2
-127.0.0.1:6379&gt; zcard myZset # 查看 sorted set 中的元素数量
-(integer) 3
-127.0.0.1:6379&gt; zscore myZset value1 # 查看某个 value 的权重
-&quot;3&quot;
-127.0.0.1:6379&gt; zrange  myZset 0 -1 # 顺序输出某个范围区间的元素，0 -1 表示输出所有元素
-1) &quot;value3&quot;
-2) &quot;value2&quot;
-3) &quot;value1&quot;
-127.0.0.1:6379&gt; zrange  myZset 0 1 # 顺序输出某个范围区间的元素，0 为 start  1 为 stop
-1) &quot;value3&quot;
-2) &quot;value2&quot;
-127.0.0.1:6379&gt; zrevrange  myZset 0 1 # 逆序输出某个范围区间的元素，0 为 start  1 为 stop
-1) &quot;value1&quot;
-2) &quot;value2&quot;
-</code></pre>
-</li>
-<li>
-<h2 id="redis集群架构">redis集群架构</h2>
-<h4 id="redis-主从复制">Redis 主从复制</h4>
-<p>到 <a href="https://snailclimb.gitee.io/javaguide/#/docs/database/Redis/redis-collection/Redis(9)%E2%80%94%E2%80%94%E9%9B%86%E7%BE%A4%E5%85%A5%E9%97%A8%E5%AE%9E%E8%B7%B5%E6%95%99%E7%A8%8B?id=%E7%9B%B8%E5%85%B3%E9%98%85%E8%AF%BB">目前</a> 为止，我们所学习的 Redis 都是 <strong>单机版</strong> 的，这也就意味着一旦我们所依赖的 Redis 服务宕机了，我们的主流程也会受到一定的影响，这当然是我们不能够接受的。</p>
-<p>所以一开始我们的想法是：搞一台备用机。这样我们就可以在一台服务器出现问题的时候切换动态地到另一台去：</p>
-<figure data-type="image" tabindex="19"><img src="https://upload-images.jianshu.io/upload_images/7896890-c48d255bc0b13672.gif?imageMogr2/auto-orient/strip" alt="img" loading="lazy"></figure>
-<p>幸运的是，两个节点数据的同步我们可以使用 Redis 的 <strong>主从同步</strong> 功能帮助到我们，这样一来，有个备份，心里就踏实多了。</p>
-<h4 id="redis-哨兵">Redis 哨兵</h4>
-<p>后来因为某种神秘力量，Redis 老会在莫名其妙的时间点出问题 <em>(比如半夜 2 点)</em>，我总不能 24 小时时刻守在电脑旁边切换节点吧，于是另一个想法又开始了：给所有的节点找一个 <strong>&quot;管家&quot;</strong>，自动帮我监听照顾节点的状态并切换：</p>
-<figure data-type="image" tabindex="20"><img src="https://upload-images.jianshu.io/upload_images/7896890-de8d9ce9e77bf211.gif?imageMogr2/auto-orient/strip" alt="img" loading="lazy"></figure>
-<p>这大概就是 <strong>Redis 哨兵</strong> <em>(Sentinel)</em> 的简单理解啦。什么？管家宕机了怎么办？相较于有大量请求的 Redis 服务来说，管家宕机的概率就要小得多啦.. 如果真的宕机了，我们也可以直接切换成当前可用的节点保证可用.</p>
-<h4 id="redis-集群化">Redis 集群化</h4>
-<p>好了，通过上面的一些解决方案我们对 Redis 的 <strong>稳定性</strong> 稍微有了一些底气了，但单台节点的计算能力始终有限，所谓人多力量大，如果我们把 <strong>多个节点组合</strong> 成 <strong>一个可用的工作节点</strong>，那就大大增加了 Redis 的 <strong>高可用、可扩展、分布式、容错</strong> 等特性：</p>
-<figure data-type="image" tabindex="21"><img src="https://upload-images.jianshu.io/upload_images/7896890-516eb4a9465451a6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="img" loading="lazy"></figure>
-<p><em>上图</em> 展示了 <strong>Redis Cluster</strong> 典型的架构图，集群中的每一个 Redis 节点都 <strong>互相两两相连</strong>，客户端任意 <strong>直连</strong> 到集群中的 <strong>任意一台</strong>，就可以对其他 Redis 节点进行 <strong>读写</strong> 的操作。</p>
-</li>
-<li>
-<h2 id="redis数据类型的底层数据结构">redis数据类型的底层数据结构</h2>
-<h1 id="redis-五种基本数据结构"><a href="https://snailclimb.gitee.io/javaguide/#/docs/database/Redis/redis-collection/Redis(1)%E2%80%94%E2%80%945%E7%A7%8D%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84?id=%E4%BA%8C%E3%80%81redis-%E4%BA%94%E7%A7%8D%E5%9F%BA%E6%9C%AC%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84">Redis 五种基本数据结构</a></h1>
-</li>
-<li>
-<h2 id="redis为什么快说一下io多路复用及">redis为什么快，说一下io多路复用及</h2>
-</li>
-</ol>
-<p>大体上来说，<strong>Redis 6.0 之前主要还是单线程处理。</strong></p>
-<p><strong>那，Redis6.0 之前 为什么不使用多线程？</strong></p>
-<p>我觉得主要原因有下面 3 个：</p>
-<ol>
-<li>单线程编程容易并且更容易维护；</li>
-<li>Redis 的性能瓶颈不再 CPU ，主要在内存和网络；</li>
-<li>多线程就会存在死锁、线程上下文切换等问题，甚至会影响性能。</li>
-</ol>
-<p><strong>既然是单线程，那怎么监听大量的客户端连接呢？</strong></p>
-<p>Redis 通过<strong>IO 多路复用程序</strong> 来监听来自客户端的大量连接（或者说是监听多个 socket），它会将感兴趣的事件及类型(读、写）注册到内核中并监听每个事件是否发生。</p>
-<p>这样的好处非常明显： <strong>I/O 多路复用技术的使用让 Redis 不需要额外创建多余的线程来监听客户端的大量连接，降低了资源的消耗</strong>（和 NIO 中的 <code>Selector</code> 组件很像）。</p>
-<p>另外， Redis 服务器是一个事件驱动程序，服务器需要处理两类事件： 1. 文件事件; 2. 时间事件。</p>
-<p>时间事件不需要多花时间了解，我们接触最多的还是 <strong>文件事件</strong>（客户端进行读取写入等操作，涉及一系列网络通信）。</p>
-<p>《Redis 设计与实现》有一段话是如是介绍文件事件的，我觉得写得挺不错。</p>
-<blockquote>
-<p>Redis 基于 Reactor 模式开发了自己的网络事件处理器：这个处理器被称为文件事件处理器（file event handler）。文件事件处理器使用 I/O 多路复用（multiplexing）程序来同时监听多个套接字，并根据 套接字目前执行的任务来为套接字关联不同的事件处理器。</p>
-<p>当被监听的套接字准备好执行连接应答（accept）、读取（read）、写入（write）、关 闭（close）等操作时，与操作相对应的文件事件就会产生，这时文件事件处理器就会调用套接字之前关联好的事件处理器来处理这些事件。</p>
-<p><strong>虽然文件事件处理器以单线程方式运行，但通过使用 I/O 多路复用程序来监听多个套接字</strong>，文件事件处理器既实现了高性能的网络通信模型，又可以很好地与 Redis 服务器中其他同样以单线程方式运行的模块进行对接，这保持了 Redis 内部单线程设计的简单性。</p>
-</blockquote>
-<p>可以看出，文件事件处理器（file event handler）主要是包含 4 个部分：</p>
-<ul>
-<li>多个 socket（客户端连接）</li>
-<li>IO 多路复用程序（支持多个客户端连接的关键）</li>
-<li>文件事件分派器（将 socket 关联到相应的事件处理器）</li>
-<li>事件处理器（连接应答处理器、命令请求处理器、命令回复处理器）</li>
-</ul>
-<img src="https://snailclimb.gitee.io/javaguide/docs/database/Redis/images/redis-all/redis%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E5%99%A8.png" alt="img" style="zoom: 50%;" />]]></content>
     </entry>
 </feed>

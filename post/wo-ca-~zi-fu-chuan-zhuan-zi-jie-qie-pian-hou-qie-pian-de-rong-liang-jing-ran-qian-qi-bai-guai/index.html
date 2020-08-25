@@ -8,7 +8,7 @@
 <meta name="keywords" content="ChicRingo个人博客">
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
-<title>ChicRingo个人博客</title>
+<title>我擦~字符串转字节切片后，切片的容量竟然千奇百怪 | ChicRingo个人博客</title>
 <link rel="shortcut icon" href="/favicon.ico?v=1598317380194">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
@@ -38,6 +38,8 @@
 
 
 
+  <meta name="description" content="我擦~字符串转字节切片后，切片的容量竟然千奇百怪" />
+  <meta name="keywords" content="" />
 </head>
 
 <body>
@@ -172,8 +174,24 @@
     <div
       class="section-layout gemini ">
       <div class="section-layout-wrapper">
-        <div id="sidebarMeta" class="sidebar">
-    
+        
+
+<div class="sidebar">
+  
+    <div class="sidebar-box box-shadow-wrapper bg-color right-motion" id="sidebar">
+      
+        <div class="post-list-sidebar">
+          <div class="sidebar-title">
+            <span id="tocSideBar" class="sidebar-title-item sidebar-title-active language" data-lan="index">文章目录</span>
+            <span id="metaSideBar" class="sidebar-title-item language" data-lan="preview">站点概览</span>
+          </div>
+        </div>
+      
+      <div class="sidebar-body gemini" id="sidebar_body">
+        
+          
+            <div class="post-side-meta" id="post_side_meta">
+              
 <div class="sidebar-wrapper box-shadow-wrapper bg-color">
   <div class="sidebar-item">
     <img class="site-author-image right-motion" src="/images/avatar.png"/>
@@ -233,55 +251,642 @@
   </div>
 
 </div>
+            </div>
+            <div class="post-toc sidebar-body-active" id="post_toc" style="opacity: 1;">
+              <div class="toc-box right-motion">
+  <div class="toc-wrapper auto-number auto"
+    id="toc_wrapper">
+    <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E4%B8%80">现象一</a></li>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E4%BA%8C">现象二</a></li>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E4%B8%89">现象三</a></li>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E5%9B%9B">现象四</a></li>
+<li><a href="#%E7%8E%B0%E8%B1%A1%E4%BA%94">现象五</a></li>
+</ul>
+</li>
+<li><a href="#%E5%88%86%E6%9E%90">分析</a>
+<ul>
+<li><a href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8F%98%E9%87%8F%E8%BD%AC%E5%88%87%E7%89%87">字符串变量转切片</a></li>
+<li><a href="#%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9B%B4%E6%8E%A5%E8%BD%AC%E5%88%87%E7%89%87">字符串直接转切片</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BB%93%E8%AE%BA">结论</a></li>
+<li><a href="#%E6%89%A9%E5%B1%95">扩展</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
 </div>
+
 <script>
-  let sidebarMeta = document.querySelector('#sidebarMeta');
-  let scheme = 'gemini';
-  let sidebarWrapper = document.querySelector('.sidebar-wrapper');
-  if (sidebarMeta && (scheme === 'pisces' || scheme === 'gemini')) {
-    document.addEventListener('scroll', function(e) {
-      if (document.scrollingElement.scrollTop > parseInt(sidebarMeta.style.marginTop) + 10) {
-        sidebarWrapper.classList.add('home-sidebar-fixed')
-      } else {
-        sidebarWrapper.classList.remove('home-sidebar-fixed')
+
+  let lastTop = 0, lList = [], hList = [], postBody, lastIndex = -1;
+  let active = 'active-show', activeClass = 'active-current';
+  let tocWrapper = document.querySelector('#toc_wrapper');
+  let tocContent = tocWrapper.children[0];
+  let autoNumber = tocWrapper && tocWrapper.classList.contains('auto-number');
+
+  function addTocNumber(elem, deep) {
+    if (!elem) {
+      return;
+    }
+    let prop = elem.__proto__;
+
+    if (prop === HTMLUListElement.prototype) {
+      for (let i = 0; i < elem.children.length; i++) {
+        addTocNumber(elem.children[i], deep + (i + 1) + '.');
       }
+    } else if (prop === HTMLLIElement.prototype) {
+      // 保存li元素
+      if (elem.children[0] && elem.children[0].__proto__ === HTMLAnchorElement.prototype) {
+        lList.push(elem);
+      }
+      for (let i = 0; i < elem.children.length; i++) {
+        let cur = elem.children[i];
+        if (cur.__proto__ === HTMLAnchorElement.prototype) {
+          if (autoNumber) {
+            cur.text = deep + ' ' + cur.text;
+          }
+        } else if (cur.__proto__ === HTMLUListElement.prototype) {
+          addTocNumber(cur, deep);
+        }
+      }
+    }
+  }
+
+  function removeParentActiveClass() {
+    let parents = tocContent.querySelectorAll('.' + active)
+    parents.forEach(function (elem) {
+      elem.classList.remove(active);
     });
   }
-  </script>
-        <div class="section-box gemini box-shadow-wrapper">
-          <section class="friends-section bg-color slide-down-in">
-            <div class="firends-box">
-              <h1 class="firends-title" itemprop="name headline">友情链接</h1>
-              
-              
-              
+
+  function addActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.add(activeClass);
+    }
+  }
+
+  function removeActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.remove(activeClass);
+    }
+  }
+
+  function addActiveLiElemment(elem, parent) {
+    if (!elem || elem === parent) {
+      return;
+    } else {
+      if (elem.__proto__ === HTMLLIElement.prototype) {
+        elem.classList.add(active);
+      }
+      addActiveLiElemment(elem.parentElement, parent);
+    }
+  }
+
+  function showToc() {
+    if (tocWrapper) {
+      postBody = document.querySelector('#post_body');
+      for (let i = 0; i < postBody.children.length; i++) {
+        if (postBody.children[i].__proto__ === HTMLHeadingElement.prototype) {
+          hList.push(postBody.children[i]);
+        }
+      }
+      if (tocWrapper.classList.contains('compress')) {
+        tocContent.classList.add('closed');
+      } else if (tocWrapper.classList.contains('no_compress')) {
+        tocContent.classList.add('expanded');
+      } else {
+        if (hList.length > 10) {
+          active = 'active-hidden'
+          tocContent.classList.add('closed');
+        } else {
+          tocContent.classList.add('expanded');
+        }
+      }
+    }
+  }
+
+  (function () {
+    // 处理不是从#一级标题开始目录
+    if (tocContent.children.length === 1 && tocContent.children[0].__proto__ === HTMLLIElement.prototype) {
+      let con = tocContent.children[0].children[0];
+      tocContent.innerHTML = con.innerHTML;
+    }
+    let markdownItTOC = document.querySelector('.markdownIt-TOC');
+    let innerHeight = window.innerHeight;
+    markdownItTOC.style = `max-height: ${innerHeight - 80 > 0 ? innerHeight - 80 : innerHeight}px`
+    addTocNumber(tocContent, '');
+  })();
+
+  document.addEventListener('scroll', function (e) {
+    if (lList.length <= 0) {
+      return;
+    }
+    let scrollTop = document.scrollingElement.scrollTop + 10;
+    let dir;
+
+    if (lastTop - scrollTop > 0) {
+      dir = 'up';
+    } else {
+      dir = 'down';
+    }
+
+    lastTop = scrollTop;
+    if (scrollTop <= 0) {
+      if (lastIndex >= 0 && lastIndex < hList.length) {
+        lList[lastIndex].classList.remove(activeClass);
+      }
+      return;
+    }
+
+    let current = 0, hasFind = false;
+    for (let i = 0; i < hList.length; i++) {
+      if (hList[i].offsetTop > scrollTop) {
+        current = i;
+        hasFind = true;
+        break;
+      }
+    }
+    if (!hasFind && scrollTop > lList[lList.length - 1].offsetTop) {
+      current = hList.length - 1;
+    } else {
+      current--;
+    }
+    if (dir === 'down') {
+      if (current > lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex)
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    } else {
+      if (current < lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex);
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    }
+  });
+
+
+  window.addEventListener('load', function () {
+    showToc();
+    document.querySelector('#sidebar').style = 'display: block;';
+    tocWrapper.classList.add('toc-active');
+    setTimeout(function () {
+      if ("createEvent" in document) {
+        let evt = document.createEvent("HTMLEvents");
+        evt.initEvent("scroll", false, true);
+        document.dispatchEvent(evt);
+      }
+      else {
+        document.fireEvent("scroll");
+      }
+    }, 500)
+  })
+
+</script>
             </div>
-            <hr>
-            <div style="text-align:center">
-              <span class="with-love">
-                <i class="fa fa-heart"></i>
-              </span>
-              <span class="language" data-lan="leave-message">留言添加友链</span>
-              <span class="with-love">
-                <i class="fa fa-heart"></i>
-              </span>
+          
+        
+      </div>
+    </div>
+  
+</div>
+<script>
+  const SIDEBAR_TITLE_ACTIVE = 'sidebar-title-active';
+  const SIDEBAR_BODY_ACTIVE = 'sidebar-body-active';
+  const SLIDE_UP_IN = 'slide-up-in';
+
+  let sidebar = document.querySelector('#sidebar'),
+  tocSideBar = document.querySelector('#tocSideBar'),
+  metaSideBar = document.querySelector('#metaSideBar'),
+  postToc = document.querySelector('#post_toc'),
+  postSiteMeta = document.querySelector('#post_side_meta'),
+  sidebarTitle = document.querySelector('.sidebar-title'),
+  sidebarBody = document.querySelector('#sidebar_body');
+
+  tocSideBar && tocSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  metaSideBar && metaSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  function toggleSidebar(e) {
+    let currentTitle = document.querySelector("."+SIDEBAR_TITLE_ACTIVE);
+    if (currentTitle == e.srcElement) {
+      return ;
+    }
+    let current, showElement, hideElement;
+    if (e.srcElement == metaSideBar) {
+      showElement = postSiteMeta;
+      hideElement = postToc;
+    } else if (e.srcElement == tocSideBar){
+      showElement = postToc;
+      hideElement = postSiteMeta;
+    }
+    currentTitle.classList.remove(SIDEBAR_TITLE_ACTIVE);
+    e.srcElement.classList.add(SIDEBAR_TITLE_ACTIVE);
+
+    window.Velocity(hideElement, 'stop');
+    window.Velocity(hideElement, 'transition.slideUpOut', {
+      display: 'none',
+      duration: 200,
+      complete: function () {
+        window.Velocity(showElement, 'transition.slideDownIn', {
+          duration: 200
+        });
+      }
+    })
+    hideElement.classList.remove(SIDEBAR_BODY_ACTIVE);
+    showElement.classList.add(SIDEBAR_BODY_ACTIVE);
+  }
+
+  postToc && postToc.addEventListener('transitionend', function() {
+    this.classList.remove(SLIDE_UP_IN);
+  });
+
+  if (sidebarBody) {
+    if (sidebarBody.classList.contains('pisces') || sidebarBody.classList.contains('gemini')) {
+      let hasFix = false;
+      let scrollEl = document.querySelector('.main-continer');
+      let limitTop = document.querySelector('#nav_ul').children.length * 42 + 162;
+      window.addEventListener('scroll', function(e) {
+        if (document.scrollingElement.scrollTop >= limitTop) {
+          if (!hasFix) {
+            sidebar.classList.add('sidebar-fixed');
+            hasFix = true;
+          }
+        } else {
+          if (hasFix) {
+            sidebar.classList.remove('sidebar-fixed');
+            hasFix = false;
+          }
+        }
+      });
+    }
+  }
+  
+</script>
+        <div class="section-box box-shadow-wrapper">
+          <div class="section bg-color post post-page">
+            <section class="post-header">
+  <h1 class="post-title">
+    <a class="post-title-link" href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/">
+      我擦~字符串转字节切片后，切片的容量竟然千奇百怪
+    </a>
+  </h1>
+  <div class="post-meta">
+    
+    <span class="meta-item pc-show">
+      <i class="fa fa-calendar-o"></i>
+      <span class="language" data-lan="publish">发布于</span>
+      <span class="publish-time" data-t="2020-08-25 08:56:36">2020-08-25</span>
+      <span class="post-meta-divider pc-show">|</span>
+    </span>
+    
+    <span class="meta-item">
+      <i class="fa fa-clock-o"></i>
+      <span>15<span class="language" data-lan="minute">分钟</span></span>
+    </span>
+    <span class="meta-item">
+      <span class="post-meta-divider">|</span>
+      <i class="fa fa-file-word-o"></i>
+      <span>3232<span class="pc-show language" data-lan="words">字数</span></span>
+    </span>
+    
+  </div>
+</section>
+            <div class="post-body next-md-body" id="post_body">
+              <p>字符串转字节切片步骤如下</p>
+<ol>
+<li>
+<p>判断是否是常量， 如果是常量则转换为等容量等长的字节切片</p>
+</li>
+<li>
+<p>如果是变量， 先判断生成的切片是否发生变量逃逸</p>
+</li>
+<li>
+<ul>
+<li>如果逃逸或者字符串长度&gt;32， 则根据字符串长度可以计算出不同的容量</li>
+<li>如果未逃逸且字符串长度&lt;=32, 则字符切片容量为32</li>
+</ul>
+</li>
+</ol>
+<!-- more -->
+<p>以下文章来源于新世界杂货铺 ，作者许文</p>
+<p><a href="https://baijiahao.baidu.com/s?id=1671902920320901161"><strong>新世界杂货铺</strong>作为一名Gopher， 我愿称之为Go的干(杂)货铺子！</a></p>
+<p>神奇的现象</p>
+<p>切片， 切片， 又是切片!</p>
+<p>今天遇到的神奇问题和切片有关， 具体怎么个神奇法， 我们来看看下面几个现象</p>
+<h3 id="现象一">现象一</h3>
+<pre><code>a := &quot;abc&quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出： [97 98 99] 3 8
+</code></pre>
+<h3 id="现象二">现象二</h3>
+<pre><code>a := &quot;abc&quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 32
+</code></pre>
+<h3 id="现象三">现象三</h3>
+<pre><code>bs := []byte(&quot;abc&quot;)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 3
+</code></pre>
+<h3 id="现象四">现象四</h3>
+<pre><code>a := &quot;&quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出: [] 0 0
+</code></pre>
+<h3 id="现象五">现象五</h3>
+<pre><code>a := &quot;&quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 0 32
+</code></pre>
+<h2 id="分析">分析</h2>
+<p>到这儿我已经满脑子问号了</p>
+<figure data-type="image" tabindex="1"><img src="https://mmbiz.qpic.cn/mmbiz_jpg/JTbQwON6HwLCaWz0ZWL9fG6r4Tb8bRCNIgpKYm1jhPB3fbuxia13qrFQvHdsT9fa6voJicXvD5SHe6c1jDXKngNw/640?wx_fmt=jpeg&amp;tp=webp&amp;wxfrom=5&amp;wx_lazy=1&amp;wx_co=1" alt="img" loading="lazy"></figure>
+<h3 id="字符串变量转切片">字符串变量转切片</h3>
+<p>一个小小的字符串转切片， 内部究竟发生了什么， 竟然如此的神奇。这种时候只好祭出汇编大法， 看看汇编代码(<code>希望之后有机会能够对go的汇编语法进行简单的介绍</code>)有没有什么关键词能够帮助我们</p>
+<p>以下为现象一转换的汇编代码关键部分</p>
+<pre><code>&quot;&quot;.main STEXT size=495 args=0x0 locals=0xd8
+	0x0000 00000 (test.go:5)	TEXT	&quot;&quot;.main(SB), ABIInternal, $216-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-88(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	485
+	0x0018 00024 (test.go:5)	SUBQ	$216, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 208(SP)
+	0x0027 00039 (test.go:5)	LEAQ	208(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·7be4bbacbfdb05fb3044e36c22b41e8b(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·648d0b72bb9d7f59fbfdbee57a078eee(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·2dfddcc7190380b1ae77e69d81f0a101(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &quot;&quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+96(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+104(SP)
+	0x0044 00068 (test.go:7)	MOVQ	$0, (SP)
+	0x004c 00076 (test.go:7)	PCDATA	$0, $0
+	0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x005f 00095 (test.go:7)	MOVQ	40(SP), AX
+	0x0064 00100 (test.go:7)	MOVQ	32(SP), CX
+	0x0069 00105 (test.go:7)	PCDATA	$0, $2
+	0x0069 00105 (test.go:7)	MOVQ	24(SP), DX
+	0x006e 00110 (test.go:7)	PCDATA	$0, $0
+	0x006e 00110 (test.go:7)	PCDATA	$1, $1
+	0x006e 00110 (test.go:7)	MOVQ	DX, &quot;&quot;.bs+112(SP)
+	0x0073 00115 (test.go:7)	MOVQ	CX, &quot;&quot;.bs+120(SP)
+	0x0078 00120 (test.go:7)	MOVQ	AX, &quot;&quot;.bs+128(SP)
+</code></pre>
+<p>以下为现象二转换的汇编代码关键部分</p>
+<pre><code>&quot;&quot;.main STEXT size=393 args=0x0 locals=0xe0
+	0x0000 00000 (test.go:5)	TEXT	&quot;&quot;.main(SB), ABIInternal, $224-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-96(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	383
+	0x0018 00024 (test.go:5)	SUBQ	$224, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 216(SP)
+	0x0027 00039 (test.go:5)	LEAQ	216(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·0ce64bbc7cfa5ef04d41c861de81a3d7(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·00590b99cfcd6d71bbbc6e05cb4f8bf8(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·8dcadbff7c52509cfe2d26e4d7d24689(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &quot;&quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+120(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+128(SP)
+	0x0047 00071 (test.go:7)	PCDATA	$0, $2
+	0x0047 00071 (test.go:7)	LEAQ	&quot;&quot;..autotmp_5+64(SP), CX
+	0x004c 00076 (test.go:7)	PCDATA	$0, $1
+	0x004c 00076 (test.go:7)	MOVQ	CX, (SP)
+	0x0050 00080 (test.go:7)	PCDATA	$0, $0
+	0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x0063 00099 (test.go:7)	MOVQ	40(SP), AX
+	0x0068 00104 (test.go:7)	MOVQ	32(SP), CX
+	0x006d 00109 (test.go:7)	PCDATA	$0, $3
+	0x006d 00109 (test.go:7)	MOVQ	24(SP), DX
+	0x0072 00114 (test.go:7)	PCDATA	$0, $0
+	0x0072 00114 (test.go:7)	PCDATA	$1, $1
+	0x0072 00114 (test.go:7)	MOVQ	DX, &quot;&quot;.bs+136(SP)
+	0x007a 00122 (test.go:7)	MOVQ	CX, &quot;&quot;.bs+144(SP)
+	0x0082 00130 (test.go:7)	MOVQ	AX, &quot;&quot;.bs+152(SP)
+</code></pre>
+<p>在看汇编代码之前， 我们首先来看一看<code>runtime.stringtoslicebyte</code>的函数签名</p>
+<pre><code>func stringtoslicebyte(buf *tmpBuf, s string) []byte
+</code></pre>
+<p>到这里只靠关键词已经无法看出更多的信息了,还是需要稍微了解一下汇编的语法,笔者在这里列出一点简单的分析， 之后我们还是可以通过取巧的方法发现更多的东西</p>
+<pre><code>// 现象一给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX // 将字符串&quot;abc&quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+96(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+104(SP) // 将字符串长度3存入变量a中
+0x0044 00068 (test.go:7)	MOVQ	$0, (SP) // 将0 传递个runtime.stringtoslicebyte(SB)的第一个参数(笔者猜测对应go中的nil)
+0x004c 00076 (test.go:7)	PCDATA	$0, $0 // 据说和gc有关， 具体还不清楚， 一般情况可以忽略
+0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB) // 调用函数， 此行后面的几行代码是将返回值赋值给变量bs
+
+// 现象二给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&quot;abc&quot;(SB), AX // 将字符串&quot;abc&quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &quot;&quot;.a+120(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &quot;&quot;.a+128(SP) // 将字符串长度3存入变量a中
+0x0047 00071 (test.go:7)	PCDATA	$0, $2
+0x0047 00071 (test.go:7)	LEAQ	&quot;&quot;..autotmp_5+64(SP), CX // 将内部变量autotmp_5放入寄存器CX
+0x004c 00076 (test.go:7)	PCDATA	$0, $1
+0x004c 00076 (test.go:7)	MOVQ	CX, (SP) // 将CX中的内容传递给runtime.stringtoslicebyte(SB)的第一个参数
+0x0050 00080 (test.go:7)	PCDATA	$0, $0
+0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+</code></pre>
+<p>通过上面汇编代码的分析可以知道，现象一和现象二的区别就是传递给<code>runtime.stringtoslicebyte</code>的第一个参数不同。通过对runtime包中<code>stringtoslicebyte</code>函数分析，第一个参数是否有值和字符串长度会影响代码执行的分支，从而生成不同的切片， 因此容量不一样也是常理之中， 下面我们看源码</p>
+<pre><code>func stringtoslicebyte(buf *tmpBuf, s string) []byte {
+	var b []byte
+	if buf != nil &amp;&amp; len(s) &lt;= len(buf) {
+		*buf = tmpBuf{}
+		b = buf[:len(s)]
+	} else {
+		b = rawbyteslice(len(s))
+	}
+	copy(b, s)
+	return b
+}
+</code></pre>
+<p>然而， stringtoslicebyte的第一个参数什么情况下才会有值，什么情况下为nil, 我们仍然不清楚。那怎么办呢， 只好祭出全局搜索大法：</p>
+<pre><code># 在go源码根目录执行下面的命令
+grep stringtoslicebyte -r . | grep -v &quot;//&quot;
+</code></pre>
+<p>最终在go的编译器源码cmd/compile/internal/gc/walk.go发现了如下代码块</p>
+<figure data-type="image" tabindex="2"><img src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==" alt="img" loading="lazy"></figure>
+<p>我们查看<code>mkcall</code> 函数签名可以知道, 从第四个参数开始的所有变量都会作为参数传递给第一个参数对应的函数， 最后生成一个<code>*Node</code>的变量。其中Node结构体解释如下:</p>
+<pre><code>// A Node is a single node in the syntax tree.
+// Actually the syntax tree is a syntax DAG, because there is only one
+// node with Op=ONAME for a given instance of a variable x.
+// The same is true for Op=OTYPE and Op=OLITERAL. See Node.mayBeShared.
+</code></pre>
+<p>综合上述信息我们得出的结论是，编译器会对stringtoslicebyte的函数调用生成一个AST(抽象语法树)对应的节点。因此我们也知道传递给stringtoslicebyte函数的第一个变量也就对应于上图中的变量a.</p>
+<p>其中a的初始值为<code>nodnil()</code>的返回值，即默认为<code>nil</code>. 但是<code>n.Esc == EscNone</code>时，a会变成一个数组。我们看一下EscNone的解释.</p>
+<pre><code>// 此代码位于cmd/compile/internal/gc/esc.go中
+const (
+	// ...
+	EscNone           // Does not escape to heap, result, or parameters.
+    ...
+)
+</code></pre>
+<p>由上可知, <code>EscNone</code>用来判断变量是否逃逸,到这儿了我们就很好办了，接下来我们对现象一和现象二的代码进行逃逸分析.</p>
+<pre><code># 执行变量逃逸分析命令: go run -gcflags '-m -l' test.go
+# 现象一逃逸分析如下：
+./test.go:7:14: ([]byte)(a) escapes to heap
+./test.go:8:13: main ... argument does not escape
+./test.go:8:13: bs escapes to heap
+./test.go:8:21: len(bs) escapes to heap
+./test.go:8:30: cap(bs) escapes to heap
+[97 98 99] 3 8
+# 现象二逃逸分析如下：
+./test.go:7:14: main ([]byte)(a) does not escape
+./test.go:8:13: main ... argument does not escape
+./test.go:8:17: len(bs) escapes to heap
+./test.go:8:26: cap(bs) escapes to heap
+3 32
+</code></pre>
+<p>根据上面的信息我们知道在现象一中，bs变量发生了逃逸，现象二中变量未发生逃逸，也就是说stringtoslicebyte函数的第一个参数在变量未发生逃逸时其值不为nil,变量发生逃逸时其值为nil。到这里我们已经搞明白stringtoslicebyte的第一个参数了， 那我们继续分析stringtoslicebyte的内部逻辑</p>
+<p>我们在runtime/string.go中看到stringtoslicebyte第一个参数的类型定义如下：</p>
+<pre><code>const tmpStringBufSize = 32
+
+type tmpBuf [tmpStringBufSize]byte
+</code></pre>
+<p>综上: 现象二中bs变量未发生变量逃逸, stringtoslicebyte第一个参数不为空且是一个长度为32的byte数组, 因此在现象二中生成了一个容量为32的切片</p>
+<p>根据对stringtoslicebyte的源码分析， 我们知道现象一调用了<code>rawbyteslice</code>函数</p>
+<pre><code>func rawbyteslice(size int) (b []byte) {
+	cap := roundupsize(uintptr(size))
+	p := mallocgc(cap, nil, false)
+	if cap != uintptr(size) {
+		memclrNoHeapPointers(add(p, uintptr(size)), cap-uintptr(size))
+	}
+
+	*(*slice)(unsafe.Pointer(&amp;b)) = slice{p, size, int(cap)}
+	return
+}
+</code></pre>
+<p>由上面的代码知道， 切片的容量通过runtime/msize.go中的<code>roundupsize</code>函数计算得出, 其中_MaxSmallSize和class_to_size均定义在runtime/sizeclasses.go</p>
+<pre><code>func roundupsize(size uintptr) uintptr {
+	if size &lt; _MaxSmallSize {
+		if size &lt;= smallSizeMax-8 {
+			return uintptr(class_to_size[size_to_class8[(size+smallSizeDiv-1)/smallSizeDiv]])
+		} else {
+			return uintptr(class_to_size[size_to_class128[(size-smallSizeMax+largeSizeDiv-1)/largeSizeDiv]])
+		}
+	}
+	if size+_PageSize &lt; size {
+		return size
+	}
+	return round(size, _PageSize)
+}
+</code></pre>
+<p>由于字符串abc的长度小于_MaxSmallSize(32768)，故切片的长度只能取数组class_to_size中的值， 即<code>0, 8, 16, 32, 48, 64, 80, 96, 112, 128....</code>s</p>
+<p>至此, 现象一中切片容量为什么为8也真相大白了。相信到这里很多人已经明白现象四和现象五是怎么回事儿了, 其逻辑分别与现象一和现象二是一致的， 有兴趣的， 可以在自己的电脑上面试一试。</p>
+<h3 id="字符串直接转切片">字符串直接转切片</h3>
+<p>那你说了这么多， 现象三还是不能解释啊。请各位看官莫急， 接下来我们继续分析。</p>
+<p>相信各位细心的小伙伴应该早就发现了我们在上面的<code>cmd/compile/internal/gc/walk.go</code>源码图中折叠了部分代码， 现在我们就将这块神秘的代码赤裸裸的展示出来</p>
+<p>我们分析这块代码发现,go编译器在将<code>字符串转字节切片</code>生成AST时，总共分为三步。</p>
+<ol>
+<li>先判断该变量是否是常量字符串,如果是常量字符串,则直接通过<code>types.NewArray</code>创建一个和字符串等长的数组</li>
+<li>常量字符串生成的切片变量也要进行逃逸分析，并判断其大小是否大于函数栈允许分配给变量的最大长度， 从而判断节点是分配在栈上还是在堆上</li>
+<li>最后，如果字符串长度是大于0， 将字符串内容复制到字节切片中， 然后返回。因此现象三中的切片容量是3也就完全清楚了</li>
+</ol>
+<h2 id="结论">结论</h2>
+<p>字符串转字节切片步骤如下</p>
+<ol>
+<li>
+<p>判断是否是常量， 如果是常量则转换为等容量等长的字节切片</p>
+</li>
+<li>
+<p>如果是变量， 先判断生成的切片是否发生变量逃逸</p>
+</li>
+<li>
+<ul>
+<li>如果逃逸或者字符串长度&gt;32， 则根据字符串长度可以计算出不同的容量</li>
+<li>如果未逃逸且字符串长度&lt;=32, 则字符切片容量为32</li>
+</ul>
+</li>
+</ol>
+<h2 id="扩展">扩展</h2>
+<p>常见逃逸情况</p>
+<ol>
+<li>函数返回局部指针</li>
+<li>栈空间不足逃逸</li>
+<li>动态类型逃逸, 很多函数参数为interface类型，比如fmt.Println(a ...interface{})，编译期间很难确定其参数的具体类型, 也会发生逃逸</li>
+<li>闭包引用对象逃逸</li>
+</ol>
+<blockquote>
+<p>注: 写本文时， 笔者所用go版本为: go1.13.4</p>
+</blockquote>
+<blockquote>
+<p>生命不息， 探索不止， 后续将持续更新有关于go的技术探索</p>
+</blockquote>
+
             </div>
-            <hr>
-            <div class="friends-note">
-              <p><strong class="language" data-lan="format">友链格式：</strong></p>
-              <ul>
-                <li><span class="language" data-lan="site-name">网站名称：</span>ChicRingo个人博客</li>
-                <li><span class="language" data-lan="site-link">网站地址：</span><a href="https://ChicRingo.github.io" data-pjax-state="">https://ChicRingo.github.io</a></li>
-                <li><span class="language" data-lan="site-desc">网站描述：</span>温故而知新</li>
-                <li><span class="language" data-lan="site-img">网站头像：</span>
-                  <a href="https://ChicRingo.github.io/images/avatar.png">https://ChicRingo.github.io/images/avatar.png</a>
-                </li>
-              </ul>
-            </div>
+            
+            
+              <div class="post-footer">
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong class="language" data-lan="author">本文作者：</strong>
+      ChicRingo
+    </li>
+    <li class="post-copyright-link">
+      <strong class="language" data-lan="link">本文链接：</strong>
+      <a href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/" title="我擦~字符串转字节切片后，切片的容量竟然千奇百怪">https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong class="language" data-lan="copyright">版权声明： </strong>
+      本博客所有文章除特别声明外，均采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i> BY-NC-SA</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+  <div class="tags">
+    
+  </div>
+  <div class="nav">
+    <div class="nav-prev">
+      
+    </div>
+    <div class="nav-next">
+      
+        <a class="nav-pc-next" title="使用 Hugo 搭建博客" href="https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/">使用 Hugo 搭建博客</a>
+        <a class="nav-mobile-next" title="使用 Hugo 搭建博客" href="https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/">下一篇</a>
+        <i class="fa fa-chevron-right"></i>
+      
+    </div>
+  </div>
+</div>
+            
             
   
 
-          </section>
+          </div>
         </div>
       </div>
     </div>
@@ -1008,6 +1613,253 @@
   }
 
 </script>
+    <div class="light-box" id="light_box"></div>
+<script>
+  let imgs = document.querySelectorAll('.post-body img');
+  let lightBox = document.querySelector('#light_box');
+  lightBox.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+  })
+  lightBox.addEventListener('mousewheel', (e) => {
+    e.preventDefault()
+  })
+  let width = window.innerWidth * 0.8;
+  lightBox.onclick = () => {
+    let img = lightBox.querySelector('img');
+    lightBox.style = '';
+    img && img.remove();
+  }
+  imgs.forEach(item => {
+    item.onclick = function (e) {
+      let lightImg = document.createElement('img');
+      lightImg.src = this.src;
+      lightBox.style = `height: 100%; opacity: 1; background-color: rgba(0, 0, 0, 0.5);cursor: zoom-out;`;
+      lightImg.style = `width: ${width}px;border-radius: 2px;`;
+      lightImg.onclick = function () {
+        lightBox.style = '';
+        this.remove();
+      }
+      lightBox.append(lightImg);
+    }
+  })
+</script>
+    <div class="reward-mask" style="display: none;">
+  <div class="reward-relative">
+    <span class="close" aria-hidden="true">x</span>
+    <div class="reward-body">
+      <h2>感谢您的支持，我会继续努力的!</h2>
+      <div class="reward-img-box">
+        <div style="position: relative; width: 140px; height: 140px;">
+          
+          
+          
+        </div>
+      </div>
+      <p class="reward-word">扫码打赏，你说多少就多少</p>
+      <p class="reward-tip">打开微信扫一扫，即可进行扫码打赏哦</p>
+    </div>
+    <div class="bottom">
+      
+      
+    </div>
+  </div>
+</div>
+<style>
+  .reward-mask {
+    position: fixed;
+    z-index: 99999;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #00000054;
+  }
+
+  .reward-relative {
+    position: relative;
+    width: 480px;
+    text-align: center;
+    margin: 0 auto;
+    border-radius: 5px;
+    background-color: #fff;
+    top: 50%;
+    margin-top: -205px;
+  }
+
+  .reward-relative .close {
+    position: absolute;
+    right: 10px;
+    font-weight: normal;
+    font-size: 16px;
+    color: #929292;
+  }
+
+  .reward-body {
+    padding: 40px 20px 20px;
+  }
+
+  .bottom {
+    display: flex;
+  }
+
+  .reward-btn {
+    text-align: center;
+  }
+
+  .reward-btn-text {
+    display: inline-block;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    background-color: #ff9734;
+    color: #FFF;
+    margin-top: 20px;
+  }
+
+  .pay-text {
+    margin-top: 10px;
+    padding: 10px;
+    flex: 1;
+    transition: all .2s linear;
+  }
+
+  .pay-text:hover {
+    background-color: #a5a5a536;
+  }
+
+  .reward-body h2 {
+    padding-top: 10px;
+    text-align: center;
+    color: #a3a3a3;
+    font-size: 16px;
+    font-weight: normal;
+    margin: 0 0 20px;
+  }
+
+  .reward-body h2:after,
+  .reward-body h2:before {
+    font-family: Arial, Helvetica, sans-serif;
+    background: 0 0;
+    width: 0;
+    height: 0;
+    font-style: normal;
+    color: #eee;
+    font-size: 80px;
+    position: absolute;
+    top: 20px;
+  }
+
+  .reward-body h2:before {
+    content: '\201c';
+    left: 50px;
+  }
+
+  .reward-body h2:after {
+    content: '\201d';
+    right: 80px;
+  }
+
+  .reward-img-box {
+    display: inline-block;
+    padding: 10px;
+    border: 6px solid #ea5f00;
+    margin: 0 auto;
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .reward-img {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (max-width: 767px) {
+    .reward-relative {
+      height: 100%;
+      top: 0px;
+      margin-top: 0;
+      width: auto;
+    }
+
+    .reward-relative .bottom {
+      flex-direction: column;
+    }
+
+    .reward-relative .pay-text {
+      width: 80%;
+      margin: 5px auto;
+      border: 1px solid silver;
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .reward-body h2:after {
+      right: 40px;
+    }
+
+    .reward-body h2:after,
+    .reward-body h2:before {
+      font-size: 60px;
+    }
+
+    .reward-body h2:before {
+      left: 20px;
+    }
+  }
+</style>
+<script>
+  !function () {
+    var mask = document.querySelector('.reward-mask');
+    let close = document.querySelector('.reward-relative .close');
+    let rewardBtn = document.querySelector('.reward-btn');
+
+    let zfb = document.querySelector('#zfb'),
+      wx = document.querySelector('#wx'),
+      zfbBtn = document.querySelector('#zfbBtn'),
+      wxBtn = document.querySelector('#wxBtn');
+
+    if (zfbBtn && wxBtn) {
+      zfbBtn.addEventListener('click', () => {
+        window.Velocity(zfb, 'transition.slideLeftIn', {
+          duration: 400
+        });
+        window.Velocity(wx, 'transition.slideRightOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+
+      wxBtn.addEventListener('click', () => {
+        window.Velocity(wx, 'transition.slideRightIn', {
+          duration: 400
+        });
+        window.Velocity(zfb, 'transition.slideLeftOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+    }
+
+    rewardBtn.addEventListener('click', (e) => {
+      window.Velocity(mask, 'transition.slideDownIn', {
+        duration: 400
+      })
+    });
+
+    close.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.Velocity(mask, 'transition.slideUpOut', {
+        duration: 400
+      })
+    })
+  }()
+</script>
+
   </div>
 </body>
 
@@ -3270,7 +4122,6 @@ OK
 
 
 <script src="/media/js/cool.js"></script>
-
 
 
 

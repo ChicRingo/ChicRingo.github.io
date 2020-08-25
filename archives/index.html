@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1598062856004">
+<link rel="shortcut icon" href="/favicon.ico?v=1598317380194">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -191,7 +191,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">10</span>
+        <span class="site-item-stat-count">11</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -257,7 +257,7 @@
   <div class="archive-timeline-box">
     <div class="archive-timeline-title">
       
-        <h2 class="language" data-lan="archives" data-count="10">非常好！目前共计10篇日志，继续努力！</h2>
+        <h2 class="language" data-lan="archives" data-count="11">非常好！目前共计11篇日志，继续努力！</h2>
       
     </div>
     
@@ -267,6 +267,19 @@
           <h2 class="tag-year">2020</h2>
         </div>    
         
+      
+      <a href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/">
+        <div class="motion-warpper tag-archive-node">
+          <div class="tag-node">
+            <h1>
+              08-25
+              <small>我擦~字符串转字节切片后，切片的容量竟然千奇百怪</small>
+            </h1>
+          </div>  
+      </div>
+      </a>
+    
+      
       
       <a href="https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/">
         <div class="motion-warpper tag-archive-node">
@@ -1159,6 +1172,289 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/"" data-c="
+          &lt;p&gt;字符串转字节切片步骤如下&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;判断是否是常量， 如果是常量则转换为等容量等长的字节切片&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果是变量， 先判断生成的切片是否发生变量逃逸&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;如果逃逸或者字符串长度&amp;gt;32， 则根据字符串长度可以计算出不同的容量&lt;/li&gt;
+&lt;li&gt;如果未逃逸且字符串长度&amp;lt;=32, 则字符切片容量为32&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;!-- more --&gt;
+&lt;p&gt;以下文章来源于新世界杂货铺 ，作者许文&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://baijiahao.baidu.com/s?id=1671902920320901161&#34;&gt;&lt;strong&gt;新世界杂货铺&lt;/strong&gt;作为一名Gopher， 我愿称之为Go的干(杂)货铺子！&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;神奇的现象&lt;/p&gt;
+&lt;p&gt;切片， 切片， 又是切片!&lt;/p&gt;
+&lt;p&gt;今天遇到的神奇问题和切片有关， 具体怎么个神奇法， 我们来看看下面几个现象&lt;/p&gt;
+&lt;h3 id=&#34;现象一&#34;&gt;现象一&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;a := &amp;quot;abc&amp;quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出： [97 98 99] 3 8
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;现象二&#34;&gt;现象二&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;a := &amp;quot;abc&amp;quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 32
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;现象三&#34;&gt;现象三&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;bs := []byte(&amp;quot;abc&amp;quot;)
+fmt.Println(len(bs), cap(bs))
+// 输出: 3 3
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;现象四&#34;&gt;现象四&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;a := &amp;quot;&amp;quot;
+bs := []byte(a)
+fmt.Println(bs, len(bs), cap(bs))
+// 输出: [] 0 0
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id=&#34;现象五&#34;&gt;现象五&lt;/h3&gt;
+&lt;pre&gt;&lt;code&gt;a := &amp;quot;&amp;quot;
+bs := []byte(a)
+fmt.Println(len(bs), cap(bs))
+// 输出: 0 32
+&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id=&#34;分析&#34;&gt;分析&lt;/h2&gt;
+&lt;p&gt;到这儿我已经满脑子问号了&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://mmbiz.qpic.cn/mmbiz_jpg/JTbQwON6HwLCaWz0ZWL9fG6r4Tb8bRCNIgpKYm1jhPB3fbuxia13qrFQvHdsT9fa6voJicXvD5SHe6c1jDXKngNw/640?wx_fmt=jpeg&amp;amp;tp=webp&amp;amp;wxfrom=5&amp;amp;wx_lazy=1&amp;amp;wx_co=1&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;h3 id=&#34;字符串变量转切片&#34;&gt;字符串变量转切片&lt;/h3&gt;
+&lt;p&gt;一个小小的字符串转切片， 内部究竟发生了什么， 竟然如此的神奇。这种时候只好祭出汇编大法， 看看汇编代码(&lt;code&gt;希望之后有机会能够对go的汇编语法进行简单的介绍&lt;/code&gt;)有没有什么关键词能够帮助我们&lt;/p&gt;
+&lt;p&gt;以下为现象一转换的汇编代码关键部分&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;quot;&amp;quot;.main STEXT size=495 args=0x0 locals=0xd8
+	0x0000 00000 (test.go:5)	TEXT	&amp;quot;&amp;quot;.main(SB), ABIInternal, $216-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-88(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	485
+	0x0018 00024 (test.go:5)	SUBQ	$216, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 208(SP)
+	0x0027 00039 (test.go:5)	LEAQ	208(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·7be4bbacbfdb05fb3044e36c22b41e8b(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·648d0b72bb9d7f59fbfdbee57a078eee(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·2dfddcc7190380b1ae77e69d81f0a101(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &amp;quot;&amp;quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&amp;quot;abc&amp;quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &amp;quot;&amp;quot;.a+96(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &amp;quot;&amp;quot;.a+104(SP)
+	0x0044 00068 (test.go:7)	MOVQ	$0, (SP)
+	0x004c 00076 (test.go:7)	PCDATA	$0, $0
+	0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x005f 00095 (test.go:7)	MOVQ	40(SP), AX
+	0x0064 00100 (test.go:7)	MOVQ	32(SP), CX
+	0x0069 00105 (test.go:7)	PCDATA	$0, $2
+	0x0069 00105 (test.go:7)	MOVQ	24(SP), DX
+	0x006e 00110 (test.go:7)	PCDATA	$0, $0
+	0x006e 00110 (test.go:7)	PCDATA	$1, $1
+	0x006e 00110 (test.go:7)	MOVQ	DX, &amp;quot;&amp;quot;.bs+112(SP)
+	0x0073 00115 (test.go:7)	MOVQ	CX, &amp;quot;&amp;quot;.bs+120(SP)
+	0x0078 00120 (test.go:7)	MOVQ	AX, &amp;quot;&amp;quot;.bs+128(SP)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;以下为现象二转换的汇编代码关键部分&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;quot;&amp;quot;.main STEXT size=393 args=0x0 locals=0xe0
+	0x0000 00000 (test.go:5)	TEXT	&amp;quot;&amp;quot;.main(SB), ABIInternal, $224-0
+	0x0000 00000 (test.go:5)	MOVQ	(TLS), CX
+	0x0009 00009 (test.go:5)	LEAQ	-96(SP), AX
+	0x000e 00014 (test.go:5)	CMPQ	AX, 16(CX)
+	0x0012 00018 (test.go:5)	JLS	383
+	0x0018 00024 (test.go:5)	SUBQ	$224, SP
+	0x001f 00031 (test.go:5)	MOVQ	BP, 216(SP)
+	0x0027 00039 (test.go:5)	LEAQ	216(SP), BP
+	0x002f 00047 (test.go:5)	FUNCDATA	$0, gclocals·0ce64bbc7cfa5ef04d41c861de81a3d7(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$1, gclocals·00590b99cfcd6d71bbbc6e05cb4f8bf8(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$2, gclocals·8dcadbff7c52509cfe2d26e4d7d24689(SB)
+	0x002f 00047 (test.go:5)	FUNCDATA	$3, &amp;quot;&amp;quot;.main.stkobj(SB)
+	0x002f 00047 (test.go:6)	PCDATA	$0, $1
+	0x002f 00047 (test.go:6)	PCDATA	$1, $0
+	0x002f 00047 (test.go:6)	LEAQ	go.string.&amp;quot;abc&amp;quot;(SB), AX
+	0x0036 00054 (test.go:6)	MOVQ	AX, &amp;quot;&amp;quot;.a+120(SP)
+	0x003b 00059 (test.go:6)	MOVQ	$3, &amp;quot;&amp;quot;.a+128(SP)
+	0x0047 00071 (test.go:7)	PCDATA	$0, $2
+	0x0047 00071 (test.go:7)	LEAQ	&amp;quot;&amp;quot;..autotmp_5+64(SP), CX
+	0x004c 00076 (test.go:7)	PCDATA	$0, $1
+	0x004c 00076 (test.go:7)	MOVQ	CX, (SP)
+	0x0050 00080 (test.go:7)	PCDATA	$0, $0
+	0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP)
+	0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP)
+	0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+	0x0063 00099 (test.go:7)	MOVQ	40(SP), AX
+	0x0068 00104 (test.go:7)	MOVQ	32(SP), CX
+	0x006d 00109 (test.go:7)	PCDATA	$0, $3
+	0x006d 00109 (test.go:7)	MOVQ	24(SP), DX
+	0x0072 00114 (test.go:7)	PCDATA	$0, $0
+	0x0072 00114 (test.go:7)	PCDATA	$1, $1
+	0x0072 00114 (test.go:7)	MOVQ	DX, &amp;quot;&amp;quot;.bs+136(SP)
+	0x007a 00122 (test.go:7)	MOVQ	CX, &amp;quot;&amp;quot;.bs+144(SP)
+	0x0082 00130 (test.go:7)	MOVQ	AX, &amp;quot;&amp;quot;.bs+152(SP)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;在看汇编代码之前， 我们首先来看一看&lt;code&gt;runtime.stringtoslicebyte&lt;/code&gt;的函数签名&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;func stringtoslicebyte(buf *tmpBuf, s string) []byte
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;到这里只靠关键词已经无法看出更多的信息了,还是需要稍微了解一下汇编的语法,笔者在这里列出一点简单的分析， 之后我们还是可以通过取巧的方法发现更多的东西&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 现象一给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&amp;quot;abc&amp;quot;(SB), AX // 将字符串&amp;quot;abc&amp;quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &amp;quot;&amp;quot;.a+96(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &amp;quot;&amp;quot;.a+104(SP) // 将字符串长度3存入变量a中
+0x0044 00068 (test.go:7)	MOVQ	$0, (SP) // 将0 传递个runtime.stringtoslicebyte(SB)的第一个参数(笔者猜测对应go中的nil)
+0x004c 00076 (test.go:7)	PCDATA	$0, $0 // 据说和gc有关， 具体还不清楚， 一般情况可以忽略
+0x004c 00076 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0051 00081 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005a 00090 (test.go:7)	CALL	runtime.stringtoslicebyte(SB) // 调用函数， 此行后面的几行代码是将返回值赋值给变量bs
+
+// 现象二给runtime.stringtoslicebyte的传参
+0x002f 00047 (test.go:6)	LEAQ	go.string.&amp;quot;abc&amp;quot;(SB), AX // 将字符串&amp;quot;abc&amp;quot;放入寄存器AX
+0x0036 00054 (test.go:6)	MOVQ	AX, &amp;quot;&amp;quot;.a+120(SP) // 将AX中的内容存入变量a中
+0x003b 00059 (test.go:6)	MOVQ	$3, &amp;quot;&amp;quot;.a+128(SP) // 将字符串长度3存入变量a中
+0x0047 00071 (test.go:7)	PCDATA	$0, $2
+0x0047 00071 (test.go:7)	LEAQ	&amp;quot;&amp;quot;..autotmp_5+64(SP), CX // 将内部变量autotmp_5放入寄存器CX
+0x004c 00076 (test.go:7)	PCDATA	$0, $1
+0x004c 00076 (test.go:7)	MOVQ	CX, (SP) // 将CX中的内容传递给runtime.stringtoslicebyte(SB)的第一个参数
+0x0050 00080 (test.go:7)	PCDATA	$0, $0
+0x0050 00080 (test.go:7)	MOVQ	AX, 8(SP) // 将AX中的内容传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x0055 00085 (test.go:7)	MOVQ	$3, 16(SP) // 将字符串长度传递给runtime.stringtoslicebyte(SB)的第二个参数
+0x005e 00094 (test.go:7)	CALL	runtime.stringtoslicebyte(SB)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;通过上面汇编代码的分析可以知道，现象一和现象二的区别就是传递给&lt;code&gt;runtime.stringtoslicebyte&lt;/code&gt;的第一个参数不同。通过对runtime包中&lt;code&gt;stringtoslicebyte&lt;/code&gt;函数分析，第一个参数是否有值和字符串长度会影响代码执行的分支，从而生成不同的切片， 因此容量不一样也是常理之中， 下面我们看源码&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;func stringtoslicebyte(buf *tmpBuf, s string) []byte {
+	var b []byte
+	if buf != nil &amp;amp;&amp;amp; len(s) &amp;lt;= len(buf) {
+		*buf = tmpBuf{}
+		b = buf[:len(s)]
+	} else {
+		b = rawbyteslice(len(s))
+	}
+	copy(b, s)
+	return b
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;然而， stringtoslicebyte的第一个参数什么情况下才会有值，什么情况下为nil, 我们仍然不清楚。那怎么办呢， 只好祭出全局搜索大法：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# 在go源码根目录执行下面的命令
+grep stringtoslicebyte -r . | grep -v &amp;quot;//&amp;quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;最终在go的编译器源码cmd/compile/internal/gc/walk.go发现了如下代码块&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;2&#34;&gt;&lt;img src=&#34;data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;我们查看&lt;code&gt;mkcall&lt;/code&gt; 函数签名可以知道, 从第四个参数开始的所有变量都会作为参数传递给第一个参数对应的函数， 最后生成一个&lt;code&gt;*Node&lt;/code&gt;的变量。其中Node结构体解释如下:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// A Node is a single node in the syntax tree.
+// Actually the syntax tree is a syntax DAG, because there is only one
+// node with Op=ONAME for a given instance of a variable x.
+// The same is true for Op=OTYPE and Op=OLITERAL. See Node.mayBeShared.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;综合上述信息我们得出的结论是，编译器会对stringtoslicebyte的函数调用生成一个AST(抽象语法树)对应的节点。因此我们也知道传递给stringtoslicebyte函数的第一个变量也就对应于上图中的变量a.&lt;/p&gt;
+&lt;p&gt;其中a的初始值为&lt;code&gt;nodnil()&lt;/code&gt;的返回值，即默认为&lt;code&gt;nil&lt;/code&gt;. 但是&lt;code&gt;n.Esc == EscNone&lt;/code&gt;时，a会变成一个数组。我们看一下EscNone的解释.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;// 此代码位于cmd/compile/internal/gc/esc.go中
+const (
+	// ...
+	EscNone           // Does not escape to heap, result, or parameters.
+    ...
+)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;由上可知, &lt;code&gt;EscNone&lt;/code&gt;用来判断变量是否逃逸,到这儿了我们就很好办了，接下来我们对现象一和现象二的代码进行逃逸分析.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;# 执行变量逃逸分析命令: go run -gcflags &#39;-m -l&#39; test.go
+# 现象一逃逸分析如下：
+./test.go:7:14: ([]byte)(a) escapes to heap
+./test.go:8:13: main ... argument does not escape
+./test.go:8:13: bs escapes to heap
+./test.go:8:21: len(bs) escapes to heap
+./test.go:8:30: cap(bs) escapes to heap
+[97 98 99] 3 8
+# 现象二逃逸分析如下：
+./test.go:7:14: main ([]byte)(a) does not escape
+./test.go:8:13: main ... argument does not escape
+./test.go:8:17: len(bs) escapes to heap
+./test.go:8:26: cap(bs) escapes to heap
+3 32
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;根据上面的信息我们知道在现象一中，bs变量发生了逃逸，现象二中变量未发生逃逸，也就是说stringtoslicebyte函数的第一个参数在变量未发生逃逸时其值不为nil,变量发生逃逸时其值为nil。到这里我们已经搞明白stringtoslicebyte的第一个参数了， 那我们继续分析stringtoslicebyte的内部逻辑&lt;/p&gt;
+&lt;p&gt;我们在runtime/string.go中看到stringtoslicebyte第一个参数的类型定义如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;const tmpStringBufSize = 32
+
+type tmpBuf [tmpStringBufSize]byte
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;综上: 现象二中bs变量未发生变量逃逸, stringtoslicebyte第一个参数不为空且是一个长度为32的byte数组, 因此在现象二中生成了一个容量为32的切片&lt;/p&gt;
+&lt;p&gt;根据对stringtoslicebyte的源码分析， 我们知道现象一调用了&lt;code&gt;rawbyteslice&lt;/code&gt;函数&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;func rawbyteslice(size int) (b []byte) {
+	cap := roundupsize(uintptr(size))
+	p := mallocgc(cap, nil, false)
+	if cap != uintptr(size) {
+		memclrNoHeapPointers(add(p, uintptr(size)), cap-uintptr(size))
+	}
+
+	*(*slice)(unsafe.Pointer(&amp;amp;b)) = slice{p, size, int(cap)}
+	return
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;由上面的代码知道， 切片的容量通过runtime/msize.go中的&lt;code&gt;roundupsize&lt;/code&gt;函数计算得出, 其中_MaxSmallSize和class_to_size均定义在runtime/sizeclasses.go&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;func roundupsize(size uintptr) uintptr {
+	if size &amp;lt; _MaxSmallSize {
+		if size &amp;lt;= smallSizeMax-8 {
+			return uintptr(class_to_size[size_to_class8[(size+smallSizeDiv-1)/smallSizeDiv]])
+		} else {
+			return uintptr(class_to_size[size_to_class128[(size-smallSizeMax+largeSizeDiv-1)/largeSizeDiv]])
+		}
+	}
+	if size+_PageSize &amp;lt; size {
+		return size
+	}
+	return round(size, _PageSize)
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;由于字符串abc的长度小于_MaxSmallSize(32768)，故切片的长度只能取数组class_to_size中的值， 即&lt;code&gt;0, 8, 16, 32, 48, 64, 80, 96, 112, 128....&lt;/code&gt;s&lt;/p&gt;
+&lt;p&gt;至此, 现象一中切片容量为什么为8也真相大白了。相信到这里很多人已经明白现象四和现象五是怎么回事儿了, 其逻辑分别与现象一和现象二是一致的， 有兴趣的， 可以在自己的电脑上面试一试。&lt;/p&gt;
+&lt;h3 id=&#34;字符串直接转切片&#34;&gt;字符串直接转切片&lt;/h3&gt;
+&lt;p&gt;那你说了这么多， 现象三还是不能解释啊。请各位看官莫急， 接下来我们继续分析。&lt;/p&gt;
+&lt;p&gt;相信各位细心的小伙伴应该早就发现了我们在上面的&lt;code&gt;cmd/compile/internal/gc/walk.go&lt;/code&gt;源码图中折叠了部分代码， 现在我们就将这块神秘的代码赤裸裸的展示出来&lt;/p&gt;
+&lt;p&gt;我们分析这块代码发现,go编译器在将&lt;code&gt;字符串转字节切片&lt;/code&gt;生成AST时，总共分为三步。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先判断该变量是否是常量字符串,如果是常量字符串,则直接通过&lt;code&gt;types.NewArray&lt;/code&gt;创建一个和字符串等长的数组&lt;/li&gt;
+&lt;li&gt;常量字符串生成的切片变量也要进行逃逸分析，并判断其大小是否大于函数栈允许分配给变量的最大长度， 从而判断节点是分配在栈上还是在堆上&lt;/li&gt;
+&lt;li&gt;最后，如果字符串长度是大于0， 将字符串内容复制到字节切片中， 然后返回。因此现象三中的切片容量是3也就完全清楚了&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;结论&#34;&gt;结论&lt;/h2&gt;
+&lt;p&gt;字符串转字节切片步骤如下&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;判断是否是常量， 如果是常量则转换为等容量等长的字节切片&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果是变量， 先判断生成的切片是否发生变量逃逸&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;ul&gt;
+&lt;li&gt;如果逃逸或者字符串长度&amp;gt;32， 则根据字符串长度可以计算出不同的容量&lt;/li&gt;
+&lt;li&gt;如果未逃逸且字符串长度&amp;lt;=32, 则字符切片容量为32&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;扩展&#34;&gt;扩展&lt;/h2&gt;
+&lt;p&gt;常见逃逸情况&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;函数返回局部指针&lt;/li&gt;
+&lt;li&gt;栈空间不足逃逸&lt;/li&gt;
+&lt;li&gt;动态类型逃逸, 很多函数参数为interface类型，比如fmt.Println(a ...interface{})，编译期间很难确定其参数的具体类型, 也会发生逃逸&lt;/li&gt;
+&lt;li&gt;闭包引用对象逃逸&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;注: 写本文时， 笔者所用go版本为: go1.13.4&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;p&gt;生命不息， 探索不止， 后续将持续更新有关于go的技术探索&lt;/p&gt;
+&lt;/blockquote&gt;
+">我擦~字符串转字节切片后，切片的容量竟然千奇百怪</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/shi-yong-hugo-da-jian-bo-ke/"" data-c="
