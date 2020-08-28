@@ -8,7 +8,7 @@
 <meta name="keywords" content="ChicRingo个人博客">
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
-<title>ChicRingo个人博客</title>
+<title>使用Go实现GoF的23种设计模式（二） | ChicRingo个人博客</title>
 <link rel="shortcut icon" href="/favicon.ico?v=1598628247748">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
@@ -38,6 +38,8 @@
 
 
 
+  <meta name="description" content="使用Go实现GoF的23种设计模式（二）" />
+  <meta name="keywords" content="" />
 </head>
 
 <body>
@@ -99,7 +101,7 @@
             
               
             
-            <li class="nav-item nav-item-active">
+            <li class="nav-item ">
               
               
                 <a href="/tags/" target="_self">
@@ -170,10 +172,26 @@
   <div class="main-continer">
     
     <div
-      class="section-layout  gemini">
+      class="section-layout gemini ">
       <div class="section-layout-wrapper">
-        <div id="sidebarMeta" class="sidebar">
-    
+        
+
+<div class="sidebar">
+  
+    <div class="sidebar-box box-shadow-wrapper bg-color right-motion" id="sidebar">
+      
+        <div class="post-list-sidebar">
+          <div class="sidebar-title">
+            <span id="tocSideBar" class="sidebar-title-item sidebar-title-active language" data-lan="index">文章目录</span>
+            <span id="metaSideBar" class="sidebar-title-item language" data-lan="preview">站点概览</span>
+          </div>
+        </div>
+      
+      <div class="sidebar-body gemini" id="sidebar_body">
+        
+          
+            <div class="post-side-meta" id="post_side_meta">
+              
 <div class="sidebar-wrapper box-shadow-wrapper bg-color">
   <div class="sidebar-item">
     <img class="site-author-image right-motion" src="/images/avatar.png"/>
@@ -233,454 +251,799 @@
   </div>
 
 </div>
+            </div>
+            <div class="post-toc sidebar-body-active" id="post_toc" style="opacity: 1;">
+              <div class="toc-box right-motion">
+  <div class="toc-wrapper auto-number auto"
+    id="toc_wrapper">
+    <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8Fcomposite-pattern">组合模式（Composite Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8Fadapter-pattern">适配器模式（Adapter Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-2">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-2">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8Fbridge-pattern">桥接模式（Bridge Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-3">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-3">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
 </div>
+
 <script>
-  let sidebarMeta = document.querySelector('#sidebarMeta');
-  let scheme = 'gemini';
-  let sidebarWrapper = document.querySelector('.sidebar-wrapper');
-  if (sidebarMeta && (scheme === 'pisces' || scheme === 'gemini')) {
-    document.addEventListener('scroll', function(e) {
-      if (document.scrollingElement.scrollTop > parseInt(sidebarMeta.style.marginTop) + 10) {
-        sidebarWrapper.classList.add('home-sidebar-fixed')
-      } else {
-        sidebarWrapper.classList.remove('home-sidebar-fixed')
+
+  let lastTop = 0, lList = [], hList = [], postBody, lastIndex = -1;
+  let active = 'active-show', activeClass = 'active-current';
+  let tocWrapper = document.querySelector('#toc_wrapper');
+  let tocContent = tocWrapper.children[0];
+  let autoNumber = tocWrapper && tocWrapper.classList.contains('auto-number');
+
+  function addTocNumber(elem, deep) {
+    if (!elem) {
+      return;
+    }
+    let prop = elem.__proto__;
+
+    if (prop === HTMLUListElement.prototype) {
+      for (let i = 0; i < elem.children.length; i++) {
+        addTocNumber(elem.children[i], deep + (i + 1) + '.');
       }
+    } else if (prop === HTMLLIElement.prototype) {
+      // 保存li元素
+      if (elem.children[0] && elem.children[0].__proto__ === HTMLAnchorElement.prototype) {
+        lList.push(elem);
+      }
+      for (let i = 0; i < elem.children.length; i++) {
+        let cur = elem.children[i];
+        if (cur.__proto__ === HTMLAnchorElement.prototype) {
+          if (autoNumber) {
+            cur.text = deep + ' ' + cur.text;
+          }
+        } else if (cur.__proto__ === HTMLUListElement.prototype) {
+          addTocNumber(cur, deep);
+        }
+      }
+    }
+  }
+
+  function removeParentActiveClass() {
+    let parents = tocContent.querySelectorAll('.' + active)
+    parents.forEach(function (elem) {
+      elem.classList.remove(active);
     });
   }
-  </script>
-        <div class="section-box box-shadow-wrapper">
-          <section class="section tags-section bg-color posts-expand">
-            <div class="tags-box">
-  <div class="tag-cloud-title language" data-lan="cloud-tags" data-count="6">
-    目前共计 6 个标签
-  </div>
-  <div class="tag-cloud-list" id="tags">
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-            
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-            
-      
-        
-          
-            
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/踩坑/" rel="3">踩坑</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-            
-      
-        
-      
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/dtG_jQWhR/" rel="7">Golang</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/面试/" rel="2">面试</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-            
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/-qQQtYI_O/" rel="2">Goroutine</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/MySQL/" rel="1">MySQL</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/Redis/" rel="1">Redis</a>
-    
-  </div>
-</div>
-<script>
 
-  let fontStart = 12, fontEnd = 30, colorStart = '#666', colorEnd = '#000';
-  let tags = document.querySelector('#tags').children;
-  let counts = [];
-  for(let i = 0; i < tags.length; i++) {
-    counts.push(tags[i].rel);
-  }
-  let lowest = Math.min.apply(null,counts), highest = Math.max.apply(null,counts);;
-  let range = highest - lowest;
-  if (range === 0) {
-    range = 1;
-  }
-  let fontIncr, colorIncr;
-  fontIncr = (fontEnd - fontStart) / range;
-  
-  let sColorArr = toRGB(colorStart), eColorArr = toRGB(colorEnd);
-
-  for(let i = 0; i < tags.length; i++) {
-    let disCount = tags[i].rel - lowest;
-    let fontSize = fontStart + disCount * fontIncr;
-    let style = 'font-size: ' + fontSize + 'px;';
-    let arr = [];
-    for(let c = 0; c < sColorArr.length; c++) {
-      if (disCount === 0) {
-        disCount = 1;
-      }
-      let val = (sColorArr[c] - eColorArr[c]) / range * disCount;
-      if (val >= 100) {
-        val = eColorArr[c];
-      } else if (val <= 0) {
-        val = sColorArr[c];
-      }
-      arr[c] = Math.floor(val);
+  function addActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.add(activeClass);
     }
-    style += 'color: ' + toHex(arr);
-    tags[i].style = style;
   }
 
-  function toRGB(code) {
-    if (code.length === 4) {
-      code = code.replace(/(\w)(\w)(\w)/gi, "\$1\$1\$2\$2\$3\$3");
+  function removeActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.remove(activeClass);
     }
-    var hex = /(\w{2})(\w{2})(\w{2})/.exec(code);
-    return [parseInt(hex[1], 16), parseInt(hex[2], 16), parseInt(hex[3], 16)];
   }
 
-  function toHex(ary) {
-    return "#" + ((1 << 24) + (ary[0] << 16) + (ary[1] << 8) + ary[2]).toString(16).slice(1);
+  function addActiveLiElemment(elem, parent) {
+    if (!elem || elem === parent) {
+      return;
+    } else {
+      if (elem.__proto__ === HTMLLIElement.prototype) {
+        elem.classList.add(active);
+      }
+      addActiveLiElemment(elem.parentElement, parent);
+    }
   }
+
+  function showToc() {
+    if (tocWrapper) {
+      postBody = document.querySelector('#post_body');
+      for (let i = 0; i < postBody.children.length; i++) {
+        if (postBody.children[i].__proto__ === HTMLHeadingElement.prototype) {
+          hList.push(postBody.children[i]);
+        }
+      }
+      if (tocWrapper.classList.contains('compress')) {
+        tocContent.classList.add('closed');
+      } else if (tocWrapper.classList.contains('no_compress')) {
+        tocContent.classList.add('expanded');
+      } else {
+        if (hList.length > 10) {
+          active = 'active-hidden'
+          tocContent.classList.add('closed');
+        } else {
+          tocContent.classList.add('expanded');
+        }
+      }
+    }
+  }
+
+  (function () {
+    // 处理不是从#一级标题开始目录
+    if (tocContent.children.length === 1 && tocContent.children[0].__proto__ === HTMLLIElement.prototype) {
+      let con = tocContent.children[0].children[0];
+      tocContent.innerHTML = con.innerHTML;
+    }
+    let markdownItTOC = document.querySelector('.markdownIt-TOC');
+    let innerHeight = window.innerHeight;
+    markdownItTOC.style = `max-height: ${innerHeight - 80 > 0 ? innerHeight - 80 : innerHeight}px`
+    addTocNumber(tocContent, '');
+  })();
+
+  document.addEventListener('scroll', function (e) {
+    if (lList.length <= 0) {
+      return;
+    }
+    let scrollTop = document.scrollingElement.scrollTop + 10;
+    let dir;
+
+    if (lastTop - scrollTop > 0) {
+      dir = 'up';
+    } else {
+      dir = 'down';
+    }
+
+    lastTop = scrollTop;
+    if (scrollTop <= 0) {
+      if (lastIndex >= 0 && lastIndex < hList.length) {
+        lList[lastIndex].classList.remove(activeClass);
+      }
+      return;
+    }
+
+    let current = 0, hasFind = false;
+    for (let i = 0; i < hList.length; i++) {
+      if (hList[i].offsetTop > scrollTop) {
+        current = i;
+        hasFind = true;
+        break;
+      }
+    }
+    if (!hasFind && scrollTop > lList[lList.length - 1].offsetTop) {
+      current = hList.length - 1;
+    } else {
+      current--;
+    }
+    if (dir === 'down') {
+      if (current > lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex)
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    } else {
+      if (current < lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex);
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    }
+  });
+
+
+  window.addEventListener('load', function () {
+    showToc();
+    document.querySelector('#sidebar').style = 'display: block;';
+    tocWrapper.classList.add('toc-active');
+    setTimeout(function () {
+      if ("createEvent" in document) {
+        let evt = document.createEvent("HTMLEvents");
+        evt.initEvent("scroll", false, true);
+        document.dispatchEvent(evt);
+      }
+      else {
+        document.fireEvent("scroll");
+      }
+    }, 500)
+  })
 
 </script>
-          </section>
+            </div>
+          
+        
+      </div>
+    </div>
+  
+</div>
+<script>
+  const SIDEBAR_TITLE_ACTIVE = 'sidebar-title-active';
+  const SIDEBAR_BODY_ACTIVE = 'sidebar-body-active';
+  const SLIDE_UP_IN = 'slide-up-in';
+
+  let sidebar = document.querySelector('#sidebar'),
+  tocSideBar = document.querySelector('#tocSideBar'),
+  metaSideBar = document.querySelector('#metaSideBar'),
+  postToc = document.querySelector('#post_toc'),
+  postSiteMeta = document.querySelector('#post_side_meta'),
+  sidebarTitle = document.querySelector('.sidebar-title'),
+  sidebarBody = document.querySelector('#sidebar_body');
+
+  tocSideBar && tocSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  metaSideBar && metaSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  function toggleSidebar(e) {
+    let currentTitle = document.querySelector("."+SIDEBAR_TITLE_ACTIVE);
+    if (currentTitle == e.srcElement) {
+      return ;
+    }
+    let current, showElement, hideElement;
+    if (e.srcElement == metaSideBar) {
+      showElement = postSiteMeta;
+      hideElement = postToc;
+    } else if (e.srcElement == tocSideBar){
+      showElement = postToc;
+      hideElement = postSiteMeta;
+    }
+    currentTitle.classList.remove(SIDEBAR_TITLE_ACTIVE);
+    e.srcElement.classList.add(SIDEBAR_TITLE_ACTIVE);
+
+    window.Velocity(hideElement, 'stop');
+    window.Velocity(hideElement, 'transition.slideUpOut', {
+      display: 'none',
+      duration: 200,
+      complete: function () {
+        window.Velocity(showElement, 'transition.slideDownIn', {
+          duration: 200
+        });
+      }
+    })
+    hideElement.classList.remove(SIDEBAR_BODY_ACTIVE);
+    showElement.classList.add(SIDEBAR_BODY_ACTIVE);
+  }
+
+  postToc && postToc.addEventListener('transitionend', function() {
+    this.classList.remove(SLIDE_UP_IN);
+  });
+
+  if (sidebarBody) {
+    if (sidebarBody.classList.contains('pisces') || sidebarBody.classList.contains('gemini')) {
+      let hasFix = false;
+      let scrollEl = document.querySelector('.main-continer');
+      let limitTop = document.querySelector('#nav_ul').children.length * 42 + 162;
+      window.addEventListener('scroll', function(e) {
+        if (document.scrollingElement.scrollTop >= limitTop) {
+          if (!hasFix) {
+            sidebar.classList.add('sidebar-fixed');
+            hasFix = true;
+          }
+        } else {
+          if (hasFix) {
+            sidebar.classList.remove('sidebar-fixed');
+            hasFix = false;
+          }
+        }
+      });
+    }
+  }
+  
+</script>
+        <div class="section-box box-shadow-wrapper">
+          <div class="section bg-color post post-page">
+            <section class="post-header">
+  <h1 class="post-title">
+    <a class="post-title-link" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">
+      使用Go实现GoF的23种设计模式（二）
+    </a>
+  </h1>
+  <div class="post-meta">
+    
+    <span class="meta-item pc-show">
+      <i class="fa fa-calendar-o"></i>
+      <span class="language" data-lan="publish">发布于</span>
+      <span class="publish-time" data-t="2020-08-28 23:15:08">2020-08-28</span>
+      <span class="post-meta-divider pc-show">|</span>
+    </span>
+    
+    <span class="meta-item">
+      <i class="fa fa-clock-o"></i>
+      <span>15<span class="language" data-lan="minute">分钟</span></span>
+    </span>
+    <span class="meta-item">
+      <span class="post-meta-divider">|</span>
+      <i class="fa fa-file-word-o"></i>
+      <span>3577<span class="pc-show language" data-lan="words">字数</span></span>
+    </span>
+    
+  </div>
+</section>
+            <div class="post-body next-md-body" id="post_body">
+              <p>作者：元闰子<br>
+链接：https://juejin.im/post/6864011017384132621<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+<!-- more -->
+<h2 id="前言">前言</h2>
+<p>上一篇文章<a href="https://juejin.im/post/6859015515344633863">《使用Go实现GoF的23种设计模式（一）》</a>介绍了23种设计模式中的<strong>创建型模式</strong>（Creational Pattern），创建型模式是处理对象创建的一类设计模式，主要思想是<strong>向对象的使用者隐藏对象创建的具体细节</strong>，从而达到解耦的目的。本文主要聚焦在<strong>结构型模式</strong>（Structural Pattern）上，其主要思想是<strong>将多个对象组装成较大的结构，并同时保持结构的灵活和高效</strong>，从程序的结构上解决模块之间的耦合问题。</p>
+<h2 id="组合模式composite-pattern">组合模式（Composite Pattern）</h2>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghvdqutjd5j312k0iue81.jpg" alt="组合模式结构" loading="lazy"></figure>
+<h3 id="简述">简述</h3>
+<p>在面向对象编程中，有两个常见的对象设计方法，<strong>组合</strong>和<strong>继承</strong>，两者都可以解决代码复用的问题，但是使用后者时容易出现继承层次过深，对象关系过于复杂的副作用，从而导致代码的可维护性变差。因此，一个经典的面向对象设计原则是：<strong>组合优于继承</strong>。</p>
+<p>我们都知道，组合所表示的语义为“has-a”，也就是部分和整体的关系，最经典的组合模式描述如下：</p>
+<blockquote>
+<p>将对象组合成树形结构以表示“部分-整体”的层次结构，使得用户对单个对象和组合对象的使用具有一致性。</p>
+</blockquote>
+<p>Go语言天然就支持了组合模式，而且从它不支持继承关系的特点来看，Go也奉行了<strong>组合优于继承</strong>的原则，鼓励大家在进行程序设计时多采用组合的方法。Go实现组合模式的方式有两种，分别是<strong>直接组合</strong>（Direct Composition）和<strong>嵌入组合</strong>（Embedding Composition），下面我们一起探讨这两种不同的实现方法。</p>
+<h3 id="go实现">Go实现</h3>
+<p><em>直接组合（Direct Composition）的实现方式类似于Java/C++，就是将一个对象作为另一个对象的成员属性。</em></p>
+<p>一个典型的实现如<a href="https://juejin.im/post/6859015515344633863">《使用Go实现GoF的23种设计模式（一）》</a>中所举的例子，一个<code>Message</code>结构体，由<code>Header</code>和<code>Body</code>所组成。那么<code>Message</code>就是一个整体，而<code>Header</code>和<code>Body</code>则为消息的组成部分。</p>
+<pre><code class="language-go">type Message struct {
+    Header *Header
+    Body   *Body
+}
+复制代码
+</code></pre>
+<p>现在，我们来看一个稍微复杂一点的例子，同样考虑上一篇文章中所描述的插件架构风格的消息处理系统。前面我们用<strong>抽象工厂模式</strong>解决了插件加载的问题，通常，每个插件都会有一个生命周期，常见的就是启动状态和停止状态，现在我们使用<strong>组合模式</strong>来解决插件的启动和停止问题。</p>
+<p>首先给<code>Plugin</code>接口添加几个生命周期相关的方法：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件运行状态
+type Status uint8
+
+const (
+    Stopped Status = iota
+    Started
+)
+
+type Plugin interface {
+  // 启动插件
+    Start()
+  // 停止插件
+    Stop()
+  // 返回插件当前的运行状态
+    Status() Status
+}
+// Input、Filter、Output三类插件接口的定义跟上一篇文章类似
+// 这里使用Message结构体替代了原来的string，使得语义更清晰
+type Input interface {
+    Plugin
+    Receive() *msg.Message
+}
+
+type Filter interface {
+    Plugin
+    Process(msg *msg.Message) *msg.Message
+}
+
+type Output interface {
+    Plugin
+    Send(msg *msg.Message)
+}
+
+复制代码
+</code></pre>
+<p>对于插件化的消息处理系统而言，一切皆是插件，因此我们将<code>Pipeine</code>也设计成一个插件，实现<code>Plugin</code>接口：</p>
+<pre><code class="language-go">package pipeline
+...
+// 一个Pipeline由input、filter、output三个Plugin组成
+type Pipeline struct {
+    status plugin.Status
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+// 启动的顺序 output -&gt; filter -&gt; input
+func (p *Pipeline) Start() {
+    p.output.Start()
+    p.filter.Start()
+    p.input.Start()
+    p.status = plugin.Started
+    fmt.Println(&quot;Hello input plugin started.&quot;)
+}
+// 停止的顺序 input -&gt; filter -&gt; output
+func (p *Pipeline) Stop() {
+    p.input.Stop()
+    p.filter.Stop()
+    p.output.Stop()
+    p.status = plugin.Stopped
+    fmt.Println(&quot;Hello input plugin stopped.&quot;)
+}
+
+func (p *Pipeline) Status() plugin.Status {
+    return p.status
+}
+
+复制代码
+</code></pre>
+<p>一个<code>Pipeline</code>由<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件组成，形成了“部分-整体”的关系，而且它们都实现了<code>Plugin</code>接口，这就是一个典型的组合模式的实现。Client无需显式地启动和停止<code>Input</code>、<code>Filter</code>和<code>Output</code>插件，在调用<code>Pipeline</code>对象的<code>Start</code>和<code>Stop</code>方法时，<code>Pipeline</code>就已经帮你按顺序完成对应插件的启动和停止。</p>
+<p>相比于上一篇文章，在本文中实现<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件时，需要多实现3个生命周期的方法。还是以上一篇文章中的<code>HelloInput</code>、<code>UpperFilter</code>和<code>ConsoleOutput</code>作为例子，具体实现如下：</p>
+<pre><code class="language-go">package plugin
+...
+type HelloInput struct {
+    status Status
+}
+
+func (h *HelloInput) Receive() *msg.Message {
+  // 如果插件未启动，则返回nil
+    if h.status != Started {
+        fmt.Println(&quot;Hello input plugin is not running, input nothing.&quot;)
+        return nil
+    }
+    return msg.Builder().
+        WithHeaderItem(&quot;content&quot;, &quot;text&quot;).
+        WithBodyItem(&quot;Hello World&quot;).
+        Build()
+}
+
+func (h *HelloInput) Start() {
+    h.status = Started
+    fmt.Println(&quot;Hello input plugin started.&quot;)
+}
+
+func (h *HelloInput) Stop() {
+    h.status = Stopped
+    fmt.Println(&quot;Hello input plugin stopped.&quot;)
+}
+
+func (h *HelloInput) Status() Status {
+    return h.status
+}
+复制代码
+package plugin
+...
+type UpperFilter struct {
+    status Status
+}
+
+func (u *UpperFilter) Process(msg *msg.Message) *msg.Message {
+    if u.status != Started {
+        fmt.Println(&quot;Upper filter plugin is not running, filter nothing.&quot;)
+        return msg
+    }
+    for i, val := range msg.Body.Items {
+        msg.Body.Items[i] = strings.ToUpper(val)
+    }
+    return msg
+}
+
+func (u *UpperFilter) Start() {
+    u.status = Started
+    fmt.Println(&quot;Upper filter plugin started.&quot;)
+}
+
+func (u *UpperFilter) Stop() {
+    u.status = Stopped
+    fmt.Println(&quot;Upper filter plugin stopped.&quot;)
+}
+
+func (u *UpperFilter) Status() Status {
+    return u.status
+}
+
+复制代码
+package plugin
+...
+type ConsoleOutput struct {
+    status Status
+}
+
+func (c *ConsoleOutput) Send(msg *msg.Message) {
+    if c.status != Started {
+        fmt.Println(&quot;Console output is not running, output nothing.&quot;)
+        return
+    }
+    fmt.Printf(&quot;Output:\n\tHeader:%+v, Body:%+v\n&quot;, msg.Header.Items, msg.Body.Items)
+}
+
+func (c *ConsoleOutput) Start() {
+    c.status = Started
+    fmt.Println(&quot;Console output plugin started.&quot;)
+}
+
+func (c *ConsoleOutput) Stop() {
+    c.status = Stopped
+    fmt.Println(&quot;Console output plugin stopped.&quot;)
+}
+
+func (c *ConsoleOutput) Status() Status {
+    return c.status
+}
+
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestPipeline
+Console output plugin started.
+Upper filter plugin started.
+Hello input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:text], Body:[HELLO WORLD]
+Hello input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Hello input plugin stopped.
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<p><em>组合模式的另一种实现，嵌入组合（Embedding Composition），其实就是利用了Go语言的匿名成员特性，本质上跟直接组合是一致的。</em></p>
+<p>还是以Message结构体为例，如果采用嵌入组合，则看起来像是这样：</p>
+<pre><code class="language-go">type Message struct {
+    Header
+    Body
+}
+// 使用时，Message可以引用Header和Body的成员属性，例如：
+msg := &amp;Message{}
+msg.SrcAddr = &quot;192.168.0.1&quot;
+复制代码
+</code></pre>
+<h2 id="适配器模式adapter-pattern">适配器模式（Adapter Pattern）</h2>
+<figure data-type="image" tabindex="2"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghzyia5t19j315w0k0kjl.jpg" alt="适配器模式结构" loading="lazy"></figure>
+<h3 id="简述-2">简述</h3>
+<p>适配器模式是最常用的结构型模式之一，它让原本因为接口不匹配而无法一起工作的两个对象能够一起工作。在现实生活中，适配器模式也是处处可见，比如电源插头转换器，可以让英式的插头工作在中式的插座上。适配器模式所做的就是<strong>将一个接口<code>Adaptee</code>，通过适配器<code>Adapter</code>转换成Client所期望的另一个接口<code>Target</code>来使用</strong>，实现原理也很简单，就是<code>Adapter</code>通过实现<code>Target</code>接口，并在对应的方法中调用<code>Adaptee</code>的接口实现。</p>
+<p>一个典型的应用场景是，<em>系统中一个老的接口已经过时即将废弃，但因为历史包袱没法立即将老接口全部替换为新接口，这时可以新增一个适配器，将老的接口适配成新的接口来使用</em>。适配器模式很好的践行了面向对象设计原则里的<strong>开闭原则</strong>（open/closed principle），新增一个接口时也无需修改老接口，只需多加一个适配层即可。</p>
+<h3 id="go实现-2">Go实现</h3>
+<p>继续考虑上一节的消息处理系统例子，目前为止，系统的输入都源自于<code>HelloInput</code>，现在假设需要给系统新增从Kafka消息队列中接收数据的功能，其中Kafka消费者的接口如下：</p>
+<pre><code class="language-go">package kafka
+...
+type Records struct {
+    Items []string
+}
+
+type Consumer interface {
+    Poll() Records
+}
+复制代码
+</code></pre>
+<p>由于当前<code>Pipeline</code>的设计是通过<code>plugin.Input</code>接口来进行数据接收，因此<code>kafka.Consumer</code>并不能直接集成到系统中。</p>
+<p><em>怎么办？使用适配器模式！</em></p>
+<p>为了能让<code>Pipeline</code>能够使用<code>kafka.Consumer</code>接口，我们需要定义一个适配器如下：</p>
+<pre><code class="language-go">package plugin
+...
+type KafkaInput struct {
+    status Status
+    consumer kafka.Consumer
+}
+
+func (k *KafkaInput) Receive() *msg.Message {
+    records := k.consumer.Poll()
+    if k.status != Started {
+        fmt.Println(&quot;Kafka input plugin is not running, input nothing.&quot;)
+        return nil
+    }
+    return msg.Builder().
+        WithHeaderItem(&quot;content&quot;, &quot;kafka&quot;).
+        WithBodyItems(records.Items).
+        Build()
+}
+
+// 在输入插件映射关系中加入kafka，用于通过反射创建input对象
+func init() {
+    inputNames[&quot;hello&quot;] = reflect.TypeOf(HelloInput{})
+    inputNames[&quot;kafka&quot;] = reflect.TypeOf(KafkaInput{})
+}
+...
+复制代码
+</code></pre>
+<p>因为Go语言并没有构造函数，如果按照上一篇文章中的<strong>抽象工厂模式</strong>来创建<code>KafkaInput</code>，那么得到的实例中的<code>consumer</code>成员因为没有被初始化而会是<code>nil</code>。因此，需要给<code>Plugin</code>接口新增一个<code>Init</code>方法，用于定义插件的一些初始化操作，并在工厂返回实例前调用。</p>
+<pre><code class="language-go">package plugin
+...
+type Plugin interface {
+    Start()
+    Stop()
+    Status() Status
+    // 新增初始化方法，在插件工厂返回实例前调用
+    Init()
+}
+
+// 修改后的插件工厂实现如下
+func (i *InputFactory) Create(conf Config) Plugin {
+    t, _ := inputNames[conf.Name]
+    p := reflect.New(t).Interface().(Plugin)
+  // 返回插件实例前调用Init函数，完成相关初始化方法
+    p.Init()
+    return p
+}
+
+// KakkaInput的Init函数实现
+func (k *KafkaInput) Init() {
+    k.consumer = &amp;kafka.MockConsumer{}
+}
+复制代码
+</code></pre>
+<p>上述代码中的<code>kafka.MockConsumer</code>为我们模式Kafka消费者的一个实现，代码如下：</p>
+<pre><code class="language-go">package kafka
+...
+type MockConsumer struct {}
+
+func (m *MockConsumer) Poll() *Records {
+    records := &amp;Records{}
+    records.Items = append(records.Items, &quot;i am mock consumer.&quot;)
+    return records
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestKafkaInputPipeline(t *testing.T) {
+    config := pipeline.Config{
+        Name: &quot;pipeline2&quot;,
+        Input: plugin.Config{
+            PluginType: plugin.InputType,
+            Name:       &quot;kafka&quot;,
+        },
+        Filter: plugin.Config{
+            PluginType: plugin.FilterType,
+            Name:       &quot;upper&quot;,
+        },
+        Output: plugin.Config{
+            PluginType: plugin.OutputType,
+            Name:       &quot;console&quot;,
+        },
+    }
+    p := pipeline.Of(config)
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestKafkaInputPipeline
+Console output plugin started.
+Upper filter plugin started.
+Kafka input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:kafka], Body:[I AM MOCK CONSUMER.]
+Kafka input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Pipeline stopped.
+--- PASS: TestKafkaInputPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="桥接模式bridge-pattern">桥接模式（Bridge Pattern）</h2>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi00awfcxcj31f20l01ky.jpg" alt="桥接模式结构" loading="lazy"></figure>
+<h3 id="简述-3">简述</h3>
+<p>桥接模式主要用于<strong>将抽象部分和实现部分进行解耦，使得它们能够各自往独立的方向变化</strong>。它解决了在模块有多种变化方向的情况下，用继承所导致的类爆炸问题。举一个例子，一个产品有形状和颜色两个特征（变化方向），其中形状分为方形和圆形，颜色分为红色和蓝色。如果采用继承的设计方案，那么就需要新增4个产品子类：方形红色、圆形红色、方形蓝色、圆形红色。如果形状总共有m种变化，颜色有n种变化，那么就需要新增m*n个产品子类！现在我们使用桥接模式进行优化，将形状和颜色分别设计为一个抽象接口独立出来，这样需要新增2个形状子类：方形和圆形，以及2个颜色子类：红色和蓝色。同样，如果形状总共有m种变化，颜色有n种变化，总共只需要新增m+n个子类！</p>
+<figure data-type="image" tabindex="4"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi01kwmua8j31hs0s47wj.jpg" alt="桥接模式示例" loading="lazy"></figure>
+<p>上述例子中，我们通过将形状和颜色抽象为一个接口，使产品不再依赖于具体的形状和颜色细节，从而达到了解耦的目的。<strong>桥接模式本质上就是面向接口编程，可以给系统带来很好的灵活性和可扩展性</strong>。如果一个对象存在多个变化的方向，而且每个变化方向都需要扩展，那么使用桥接模式进行设计那是再合适不过了。</p>
+<h3 id="go实现-3">Go实现</h3>
+<p>回到消息处理系统的例子，一个<code>Pipeline</code>对象主要由<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件组成（<strong>3个特征</strong>），因为是插件化的系统，不可避免的就要求支持多种<code>Input</code>、<code>Filter</code>、<code>Output</code>的实现，并能够灵活组合（<strong>有多个变化的方向</strong>）。显然，<code>Pipeline</code>就非常适合使用桥接模式进行设计，实际上我们也这么做了。我们将<code>Input</code>、<code>Filter</code>、<code>Output</code>分别设计成一个抽象的接口，它们按照各自的方向去扩展。<code>Pipeline</code>只依赖的这3个抽象接口，并不感知具体实现的细节。</p>
+<figure data-type="image" tabindex="5"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi0i6xpj9sj318a0nk4qq.jpg" alt="使用桥接模式设计的Pipeline" loading="lazy"></figure>
+<pre><code class="language-go">package plugin
+...
+type Input interface {
+    Plugin
+    Receive() *msg.Message
+}
+
+type Filter interface {
+    Plugin
+    Process(msg *msg.Message) *msg.Message
+}
+
+type Output interface {
+    Plugin
+    Send(msg *msg.Message)
+}
+复制代码
+package pipeline
+...
+// 一个Pipeline由input、filter、output三个Plugin组成
+type Pipeline struct {
+    status plugin.Status
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+// 通过抽象接口来使用，看不到底层的实现细节
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestPipeline
+Console output plugin started.
+Upper filter plugin started.
+Hello input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:text], Body:[HELLO WORLD]
+Hello input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Pipeline stopped.
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>本文主要介绍了结构型模式中的组合模式、适配器模式和桥接模式。<strong>组合模式</strong>主要解决代码复用的问题，相比于继承关系，组合模式可以避免继承层次过深导致的代码复杂问题，因此面向对象设计领域流传着<strong>组合优于继承</strong>的原则，而Go语言的设计也很好实践了该原则；<strong>适配器模式</strong>可以看作是两个不兼容接口之间的桥梁，可以将一个接口转换成Client所希望的另外一个接口，解决了模块之间因为接口不兼容而无法一起工作的问题；<strong>桥接模式</strong>将模块的抽象部分和实现部分进行分离，让它们能够往各自的方向扩展，从而达到解耦的目的。</p>
+<p>下一篇文章，我们将继续聚焦于结构型模式，介绍完剩余的4种结模式：装饰模式、外观模式、享元模式和代理模式。</p>
+
+            </div>
+            
+            
+              <div class="post-footer">
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong class="language" data-lan="author">本文作者：</strong>
+      ChicRingo
+    </li>
+    <li class="post-copyright-link">
+      <strong class="language" data-lan="link">本文链接：</strong>
+      <a href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/" title="使用Go实现GoF的23种设计模式（二）">https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong class="language" data-lan="copyright">版权声明： </strong>
+      本博客所有文章除特别声明外，均采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i> BY-NC-SA</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+  <div class="tags">
+    
+  </div>
+  <div class="nav">
+    <div class="nav-prev">
+      
+    </div>
+    <div class="nav-next">
+      
+        <a class="nav-pc-next" title="使用Go实现GoF的23种设计模式（一）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">使用Go实现GoF的23种设计模式（一）</a>
+        <a class="nav-mobile-next" title="使用Go实现GoF的23种设计模式（一）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">下一篇</a>
+        <i class="fa fa-chevron-right"></i>
+      
+    </div>
+  </div>
+</div>
+            
+            
+  
+
+          </div>
         </div>
       </div>
     </div>
@@ -1407,6 +1770,253 @@
   }
 
 </script>
+    <div class="light-box" id="light_box"></div>
+<script>
+  let imgs = document.querySelectorAll('.post-body img');
+  let lightBox = document.querySelector('#light_box');
+  lightBox.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+  })
+  lightBox.addEventListener('mousewheel', (e) => {
+    e.preventDefault()
+  })
+  let width = window.innerWidth * 0.8;
+  lightBox.onclick = () => {
+    let img = lightBox.querySelector('img');
+    lightBox.style = '';
+    img && img.remove();
+  }
+  imgs.forEach(item => {
+    item.onclick = function (e) {
+      let lightImg = document.createElement('img');
+      lightImg.src = this.src;
+      lightBox.style = `height: 100%; opacity: 1; background-color: rgba(0, 0, 0, 0.5);cursor: zoom-out;`;
+      lightImg.style = `width: ${width}px;border-radius: 2px;`;
+      lightImg.onclick = function () {
+        lightBox.style = '';
+        this.remove();
+      }
+      lightBox.append(lightImg);
+    }
+  })
+</script>
+    <div class="reward-mask" style="display: none;">
+  <div class="reward-relative">
+    <span class="close" aria-hidden="true">x</span>
+    <div class="reward-body">
+      <h2>感谢您的支持，我会继续努力的!</h2>
+      <div class="reward-img-box">
+        <div style="position: relative; width: 140px; height: 140px;">
+          
+          
+          
+        </div>
+      </div>
+      <p class="reward-word">扫码打赏，你说多少就多少</p>
+      <p class="reward-tip">打开微信扫一扫，即可进行扫码打赏哦</p>
+    </div>
+    <div class="bottom">
+      
+      
+    </div>
+  </div>
+</div>
+<style>
+  .reward-mask {
+    position: fixed;
+    z-index: 99999;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #00000054;
+  }
+
+  .reward-relative {
+    position: relative;
+    width: 480px;
+    text-align: center;
+    margin: 0 auto;
+    border-radius: 5px;
+    background-color: #fff;
+    top: 50%;
+    margin-top: -205px;
+  }
+
+  .reward-relative .close {
+    position: absolute;
+    right: 10px;
+    font-weight: normal;
+    font-size: 16px;
+    color: #929292;
+  }
+
+  .reward-body {
+    padding: 40px 20px 20px;
+  }
+
+  .bottom {
+    display: flex;
+  }
+
+  .reward-btn {
+    text-align: center;
+  }
+
+  .reward-btn-text {
+    display: inline-block;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    background-color: #ff9734;
+    color: #FFF;
+    margin-top: 20px;
+  }
+
+  .pay-text {
+    margin-top: 10px;
+    padding: 10px;
+    flex: 1;
+    transition: all .2s linear;
+  }
+
+  .pay-text:hover {
+    background-color: #a5a5a536;
+  }
+
+  .reward-body h2 {
+    padding-top: 10px;
+    text-align: center;
+    color: #a3a3a3;
+    font-size: 16px;
+    font-weight: normal;
+    margin: 0 0 20px;
+  }
+
+  .reward-body h2:after,
+  .reward-body h2:before {
+    font-family: Arial, Helvetica, sans-serif;
+    background: 0 0;
+    width: 0;
+    height: 0;
+    font-style: normal;
+    color: #eee;
+    font-size: 80px;
+    position: absolute;
+    top: 20px;
+  }
+
+  .reward-body h2:before {
+    content: '\201c';
+    left: 50px;
+  }
+
+  .reward-body h2:after {
+    content: '\201d';
+    right: 80px;
+  }
+
+  .reward-img-box {
+    display: inline-block;
+    padding: 10px;
+    border: 6px solid #ea5f00;
+    margin: 0 auto;
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .reward-img {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (max-width: 767px) {
+    .reward-relative {
+      height: 100%;
+      top: 0px;
+      margin-top: 0;
+      width: auto;
+    }
+
+    .reward-relative .bottom {
+      flex-direction: column;
+    }
+
+    .reward-relative .pay-text {
+      width: 80%;
+      margin: 5px auto;
+      border: 1px solid silver;
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .reward-body h2:after {
+      right: 40px;
+    }
+
+    .reward-body h2:after,
+    .reward-body h2:before {
+      font-size: 60px;
+    }
+
+    .reward-body h2:before {
+      left: 20px;
+    }
+  }
+</style>
+<script>
+  !function () {
+    var mask = document.querySelector('.reward-mask');
+    let close = document.querySelector('.reward-relative .close');
+    let rewardBtn = document.querySelector('.reward-btn');
+
+    let zfb = document.querySelector('#zfb'),
+      wx = document.querySelector('#wx'),
+      zfbBtn = document.querySelector('#zfbBtn'),
+      wxBtn = document.querySelector('#wxBtn');
+
+    if (zfbBtn && wxBtn) {
+      zfbBtn.addEventListener('click', () => {
+        window.Velocity(zfb, 'transition.slideLeftIn', {
+          duration: 400
+        });
+        window.Velocity(wx, 'transition.slideRightOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+
+      wxBtn.addEventListener('click', () => {
+        window.Velocity(wx, 'transition.slideRightIn', {
+          duration: 400
+        });
+        window.Velocity(zfb, 'transition.slideLeftOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+    }
+
+    rewardBtn.addEventListener('click', (e) => {
+      window.Velocity(mask, 'transition.slideDownIn', {
+        duration: 400
+      })
+    });
+
+    close.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.Velocity(mask, 'transition.slideUpOut', {
+        duration: 400
+      })
+    })
+  }()
+</script>
+
   </div>
 </body>
 
@@ -4807,7 +5417,6 @@ OK
 
 
 <script src="/media/js/cool.js"></script>
-
 
 
 

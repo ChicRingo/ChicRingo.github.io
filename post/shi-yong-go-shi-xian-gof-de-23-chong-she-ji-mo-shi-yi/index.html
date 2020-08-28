@@ -8,7 +8,7 @@
 <meta name="keywords" content="ChicRingo个人博客">
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
-<title>ChicRingo个人博客</title>
+<title>使用Go实现GoF的23种设计模式（一） | ChicRingo个人博客</title>
 <link rel="shortcut icon" href="/favicon.ico?v=1598628247748">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
@@ -38,6 +38,8 @@
 
 
 
+  <meta name="description" content="使用Go实现GoF的23种设计模式（一）" />
+  <meta name="keywords" content="" />
 </head>
 
 <body>
@@ -99,7 +101,7 @@
             
               
             
-            <li class="nav-item nav-item-active">
+            <li class="nav-item ">
               
               
                 <a href="/tags/" target="_self">
@@ -170,10 +172,26 @@
   <div class="main-continer">
     
     <div
-      class="section-layout  gemini">
+      class="section-layout gemini ">
       <div class="section-layout-wrapper">
-        <div id="sidebarMeta" class="sidebar">
-    
+        
+
+<div class="sidebar">
+  
+    <div class="sidebar-box box-shadow-wrapper bg-color right-motion" id="sidebar">
+      
+        <div class="post-list-sidebar">
+          <div class="sidebar-title">
+            <span id="tocSideBar" class="sidebar-title-item sidebar-title-active language" data-lan="index">文章目录</span>
+            <span id="metaSideBar" class="sidebar-title-item language" data-lan="preview">站点概览</span>
+          </div>
+        </div>
+      
+      <div class="sidebar-body gemini" id="sidebar_body">
+        
+          
+            <div class="post-side-meta" id="post_side_meta">
+              
 <div class="sidebar-wrapper box-shadow-wrapper bg-color">
   <div class="sidebar-item">
     <img class="site-author-image right-motion" src="/images/avatar.png"/>
@@ -233,454 +251,963 @@
   </div>
 
 </div>
+            </div>
+            <div class="post-toc sidebar-body-active" id="post_toc" style="opacity: 1;">
+              <div class="toc-box right-motion">
+  <div class="toc-wrapper auto-number auto"
+    id="toc_wrapper">
+    <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8Fsingleton-pattern">单例模式（Singleton Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BB%BA%E9%80%A0%E8%80%85%E6%A8%A1%E5%BC%8Fbuilder-pattern">建造者模式（Builder Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-2">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-2">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95%E6%A8%A1%E5%BC%8Ffactory-method-pattern">工厂方法模式（Factory Method Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-3">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-3">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8Fabstract-factory-pattern">抽象工厂模式（Abstract Factory Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-4">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-4">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8Fprototype-pattern">原型模式（Prototype Pattern）</a>
+<ul>
+<li><a href="#%E7%AE%80%E8%BF%B0-5">简述</a></li>
+<li><a href="#go%E5%AE%9E%E7%8E%B0-5">Go实现</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
 </div>
+
 <script>
-  let sidebarMeta = document.querySelector('#sidebarMeta');
-  let scheme = 'gemini';
-  let sidebarWrapper = document.querySelector('.sidebar-wrapper');
-  if (sidebarMeta && (scheme === 'pisces' || scheme === 'gemini')) {
-    document.addEventListener('scroll', function(e) {
-      if (document.scrollingElement.scrollTop > parseInt(sidebarMeta.style.marginTop) + 10) {
-        sidebarWrapper.classList.add('home-sidebar-fixed')
-      } else {
-        sidebarWrapper.classList.remove('home-sidebar-fixed')
+
+  let lastTop = 0, lList = [], hList = [], postBody, lastIndex = -1;
+  let active = 'active-show', activeClass = 'active-current';
+  let tocWrapper = document.querySelector('#toc_wrapper');
+  let tocContent = tocWrapper.children[0];
+  let autoNumber = tocWrapper && tocWrapper.classList.contains('auto-number');
+
+  function addTocNumber(elem, deep) {
+    if (!elem) {
+      return;
+    }
+    let prop = elem.__proto__;
+
+    if (prop === HTMLUListElement.prototype) {
+      for (let i = 0; i < elem.children.length; i++) {
+        addTocNumber(elem.children[i], deep + (i + 1) + '.');
       }
+    } else if (prop === HTMLLIElement.prototype) {
+      // 保存li元素
+      if (elem.children[0] && elem.children[0].__proto__ === HTMLAnchorElement.prototype) {
+        lList.push(elem);
+      }
+      for (let i = 0; i < elem.children.length; i++) {
+        let cur = elem.children[i];
+        if (cur.__proto__ === HTMLAnchorElement.prototype) {
+          if (autoNumber) {
+            cur.text = deep + ' ' + cur.text;
+          }
+        } else if (cur.__proto__ === HTMLUListElement.prototype) {
+          addTocNumber(cur, deep);
+        }
+      }
+    }
+  }
+
+  function removeParentActiveClass() {
+    let parents = tocContent.querySelectorAll('.' + active)
+    parents.forEach(function (elem) {
+      elem.classList.remove(active);
     });
   }
-  </script>
-        <div class="section-box box-shadow-wrapper">
-          <section class="section tags-section bg-color posts-expand">
-            <div class="tags-box">
-  <div class="tag-cloud-title language" data-lan="cloud-tags" data-count="6">
-    目前共计 6 个标签
-  </div>
-  <div class="tag-cloud-list" id="tags">
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-            
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-            
-      
-        
-          
-            
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/踩坑/" rel="3">踩坑</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-            
-      
-        
-      
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/dtG_jQWhR/" rel="7">Golang</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/面试/" rel="2">面试</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-            
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-            
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/-qQQtYI_O/" rel="2">Goroutine</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/MySQL/" rel="1">MySQL</a>
-    
-      
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-          
-        
-      
-        
-      
-        
-          
-        
-          
-        
-          
-        
-      
-        
-      
-        
-      
-        
-      
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-      
-        
-          
-        
-          
-        
-          
-        
-          
-            
-      
-        
-      
-      <a class="cloud-tag" href="https://ChicRingo.github.io/tag/Redis/" rel="1">Redis</a>
-    
-  </div>
-</div>
-<script>
 
-  let fontStart = 12, fontEnd = 30, colorStart = '#666', colorEnd = '#000';
-  let tags = document.querySelector('#tags').children;
-  let counts = [];
-  for(let i = 0; i < tags.length; i++) {
-    counts.push(tags[i].rel);
-  }
-  let lowest = Math.min.apply(null,counts), highest = Math.max.apply(null,counts);;
-  let range = highest - lowest;
-  if (range === 0) {
-    range = 1;
-  }
-  let fontIncr, colorIncr;
-  fontIncr = (fontEnd - fontStart) / range;
-  
-  let sColorArr = toRGB(colorStart), eColorArr = toRGB(colorEnd);
-
-  for(let i = 0; i < tags.length; i++) {
-    let disCount = tags[i].rel - lowest;
-    let fontSize = fontStart + disCount * fontIncr;
-    let style = 'font-size: ' + fontSize + 'px;';
-    let arr = [];
-    for(let c = 0; c < sColorArr.length; c++) {
-      if (disCount === 0) {
-        disCount = 1;
-      }
-      let val = (sColorArr[c] - eColorArr[c]) / range * disCount;
-      if (val >= 100) {
-        val = eColorArr[c];
-      } else if (val <= 0) {
-        val = sColorArr[c];
-      }
-      arr[c] = Math.floor(val);
+  function addActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.add(activeClass);
     }
-    style += 'color: ' + toHex(arr);
-    tags[i].style = style;
   }
 
-  function toRGB(code) {
-    if (code.length === 4) {
-      code = code.replace(/(\w)(\w)(\w)/gi, "\$1\$1\$2\$2\$3\$3");
+  function removeActiveClass(index) {
+    if (index >= 0 && index < hList.length) {
+      lList[index].classList.remove(activeClass);
     }
-    var hex = /(\w{2})(\w{2})(\w{2})/.exec(code);
-    return [parseInt(hex[1], 16), parseInt(hex[2], 16), parseInt(hex[3], 16)];
   }
 
-  function toHex(ary) {
-    return "#" + ((1 << 24) + (ary[0] << 16) + (ary[1] << 8) + ary[2]).toString(16).slice(1);
+  function addActiveLiElemment(elem, parent) {
+    if (!elem || elem === parent) {
+      return;
+    } else {
+      if (elem.__proto__ === HTMLLIElement.prototype) {
+        elem.classList.add(active);
+      }
+      addActiveLiElemment(elem.parentElement, parent);
+    }
   }
+
+  function showToc() {
+    if (tocWrapper) {
+      postBody = document.querySelector('#post_body');
+      for (let i = 0; i < postBody.children.length; i++) {
+        if (postBody.children[i].__proto__ === HTMLHeadingElement.prototype) {
+          hList.push(postBody.children[i]);
+        }
+      }
+      if (tocWrapper.classList.contains('compress')) {
+        tocContent.classList.add('closed');
+      } else if (tocWrapper.classList.contains('no_compress')) {
+        tocContent.classList.add('expanded');
+      } else {
+        if (hList.length > 10) {
+          active = 'active-hidden'
+          tocContent.classList.add('closed');
+        } else {
+          tocContent.classList.add('expanded');
+        }
+      }
+    }
+  }
+
+  (function () {
+    // 处理不是从#一级标题开始目录
+    if (tocContent.children.length === 1 && tocContent.children[0].__proto__ === HTMLLIElement.prototype) {
+      let con = tocContent.children[0].children[0];
+      tocContent.innerHTML = con.innerHTML;
+    }
+    let markdownItTOC = document.querySelector('.markdownIt-TOC');
+    let innerHeight = window.innerHeight;
+    markdownItTOC.style = `max-height: ${innerHeight - 80 > 0 ? innerHeight - 80 : innerHeight}px`
+    addTocNumber(tocContent, '');
+  })();
+
+  document.addEventListener('scroll', function (e) {
+    if (lList.length <= 0) {
+      return;
+    }
+    let scrollTop = document.scrollingElement.scrollTop + 10;
+    let dir;
+
+    if (lastTop - scrollTop > 0) {
+      dir = 'up';
+    } else {
+      dir = 'down';
+    }
+
+    lastTop = scrollTop;
+    if (scrollTop <= 0) {
+      if (lastIndex >= 0 && lastIndex < hList.length) {
+        lList[lastIndex].classList.remove(activeClass);
+      }
+      return;
+    }
+
+    let current = 0, hasFind = false;
+    for (let i = 0; i < hList.length; i++) {
+      if (hList[i].offsetTop > scrollTop) {
+        current = i;
+        hasFind = true;
+        break;
+      }
+    }
+    if (!hasFind && scrollTop > lList[lList.length - 1].offsetTop) {
+      current = hList.length - 1;
+    } else {
+      current--;
+    }
+    if (dir === 'down') {
+      if (current > lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex)
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    } else {
+      if (current < lastIndex) {
+        addActiveClass(current);
+        removeActiveClass(lastIndex);
+        lastIndex = current;
+        removeParentActiveClass();
+        lList[current] && addActiveLiElemment(lList[current].parentElement, tocContent);
+      }
+    }
+  });
+
+
+  window.addEventListener('load', function () {
+    showToc();
+    document.querySelector('#sidebar').style = 'display: block;';
+    tocWrapper.classList.add('toc-active');
+    setTimeout(function () {
+      if ("createEvent" in document) {
+        let evt = document.createEvent("HTMLEvents");
+        evt.initEvent("scroll", false, true);
+        document.dispatchEvent(evt);
+      }
+      else {
+        document.fireEvent("scroll");
+      }
+    }, 500)
+  })
 
 </script>
-          </section>
+            </div>
+          
+        
+      </div>
+    </div>
+  
+</div>
+<script>
+  const SIDEBAR_TITLE_ACTIVE = 'sidebar-title-active';
+  const SIDEBAR_BODY_ACTIVE = 'sidebar-body-active';
+  const SLIDE_UP_IN = 'slide-up-in';
+
+  let sidebar = document.querySelector('#sidebar'),
+  tocSideBar = document.querySelector('#tocSideBar'),
+  metaSideBar = document.querySelector('#metaSideBar'),
+  postToc = document.querySelector('#post_toc'),
+  postSiteMeta = document.querySelector('#post_side_meta'),
+  sidebarTitle = document.querySelector('.sidebar-title'),
+  sidebarBody = document.querySelector('#sidebar_body');
+
+  tocSideBar && tocSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  metaSideBar && metaSideBar.addEventListener('click', (e) => {
+    toggleSidebar(e);
+  });
+
+  function toggleSidebar(e) {
+    let currentTitle = document.querySelector("."+SIDEBAR_TITLE_ACTIVE);
+    if (currentTitle == e.srcElement) {
+      return ;
+    }
+    let current, showElement, hideElement;
+    if (e.srcElement == metaSideBar) {
+      showElement = postSiteMeta;
+      hideElement = postToc;
+    } else if (e.srcElement == tocSideBar){
+      showElement = postToc;
+      hideElement = postSiteMeta;
+    }
+    currentTitle.classList.remove(SIDEBAR_TITLE_ACTIVE);
+    e.srcElement.classList.add(SIDEBAR_TITLE_ACTIVE);
+
+    window.Velocity(hideElement, 'stop');
+    window.Velocity(hideElement, 'transition.slideUpOut', {
+      display: 'none',
+      duration: 200,
+      complete: function () {
+        window.Velocity(showElement, 'transition.slideDownIn', {
+          duration: 200
+        });
+      }
+    })
+    hideElement.classList.remove(SIDEBAR_BODY_ACTIVE);
+    showElement.classList.add(SIDEBAR_BODY_ACTIVE);
+  }
+
+  postToc && postToc.addEventListener('transitionend', function() {
+    this.classList.remove(SLIDE_UP_IN);
+  });
+
+  if (sidebarBody) {
+    if (sidebarBody.classList.contains('pisces') || sidebarBody.classList.contains('gemini')) {
+      let hasFix = false;
+      let scrollEl = document.querySelector('.main-continer');
+      let limitTop = document.querySelector('#nav_ul').children.length * 42 + 162;
+      window.addEventListener('scroll', function(e) {
+        if (document.scrollingElement.scrollTop >= limitTop) {
+          if (!hasFix) {
+            sidebar.classList.add('sidebar-fixed');
+            hasFix = true;
+          }
+        } else {
+          if (hasFix) {
+            sidebar.classList.remove('sidebar-fixed');
+            hasFix = false;
+          }
+        }
+      });
+    }
+  }
+  
+</script>
+        <div class="section-box box-shadow-wrapper">
+          <div class="section bg-color post post-page">
+            <section class="post-header">
+  <h1 class="post-title">
+    <a class="post-title-link" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">
+      使用Go实现GoF的23种设计模式（一）
+    </a>
+  </h1>
+  <div class="post-meta">
+    
+    <span class="meta-item pc-show">
+      <i class="fa fa-calendar-o"></i>
+      <span class="language" data-lan="publish">发布于</span>
+      <span class="publish-time" data-t="2020-08-28 23:14:07">2020-08-28</span>
+      <span class="post-meta-divider pc-show">|</span>
+    </span>
+    
+    <span class="meta-item">
+      <i class="fa fa-clock-o"></i>
+      <span>23<span class="language" data-lan="minute">分钟</span></span>
+    </span>
+    <span class="meta-item">
+      <span class="post-meta-divider">|</span>
+      <i class="fa fa-file-word-o"></i>
+      <span>5630<span class="pc-show language" data-lan="words">字数</span></span>
+    </span>
+    
+  </div>
+</section>
+            <div class="post-body next-md-body" id="post_body">
+              <p>作者：元闰子<br>
+链接：https://juejin.im/post/6859015515344633863<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+<!-- more -->
+<h2 id="前言">前言</h2>
+<p>从1995年GoF提出23种<strong>设计模式</strong>到现在，25年过去了，设计模式依旧是软件领域的热门话题。在当下，如果你不会一点设计模式，都不好意思说自己是一个合格的程序员。设计模式通常被定义为：</p>
+<blockquote>
+<p>设计模式（Design Pattern）是一套被反复使用、多数人知晓的、经过分类编目的、代码设计经验的总结，使用设计模式是为了可重用代码、让代码更容易被他人理解并且保证代码可靠性。</p>
+</blockquote>
+<p>从定义上看，<strong>设计模式其实是一种经验的总结，是针对特定问题的简洁而优雅的解决方案</strong>。既然是经验总结，那么学习设计模式最直接的好处就在于可以站在巨人的肩膀上解决软件开发过程中的一些特定问题。然而，学习设计模式的最高境界是习得其中解决问题所用到的思想，当你把它们的本质思想吃透了，也就能做到<strong>即使已经忘掉某个设计模式的名称和结构，也能在解决特定问题时信手拈来</strong>。</p>
+<p>好的东西有人吹捧，当然也会招黑。设计模式被抨击主要因为以下两点：</p>
+<p>1、<em>设计模式会增加代码量，把程序逻辑变得复杂</em>。这一点是不可避免的，但是我们并不能仅仅只考虑开发阶段的成本。最简单的程序当然是一个函数从头写到尾，但是这样后期的维护成本会变得非常大；而设计模式虽然增加了一点开发成本，但是能让人们写出可复用、可维护性高的程序。引用《软件设计的哲学》里的概念，前者就是<strong>战术编程</strong>，后者就是<strong>战略编程</strong>，我们应该<strong>对战术编程Say No</strong>！（请移步<a href="https://www.yrunz.com/archives/%E4%B8%80%E6%AD%A5%E6%AD%A5%E9%99%8D%E4%BD%8E%E8%BD%AF%E4%BB%B6%E5%A4%8D%E6%9D%82%E6%80%A7">《一步步降低软件复杂性》</a>）</p>
+<p>2、<em>滥用设计模式</em>。这是初学者最容易犯的错误，当学到一个模式时，恨不得在所有的代码都用上，从而在不该使用模式的地方刻意地使用了模式，导致了程序变得异常复杂。其实每个设计模式都有几个关键要素：<strong>适用场景</strong>、<strong>解决方法</strong>、<strong>优缺点</strong>。模式并不是万能药，它只有在特定的问题上才能显现出效果。所以，在使用一个模式前，先问问自己，当前的这个场景适用这个模式吗？</p>
+<p>《设计模式》一书的副标题是“可复用面向对象软件的基础”，但并不意味着只有面向对象语言才能使用设计模式。模式只是一种解决特定问题的思想，跟语言无关。就像Go语言一样，它并非是像C++和Java一样的面向对象语言，但是设计模式同样适用。本系列文章将使用Go语言来实现GoF提出的23种设计模式，按照<strong>创建型模式</strong>（Creational Pattern）、<strong>结构型模式</strong>（Structural Pattern）和<strong>行为型模式</strong>（Behavioral Pattern）三种类别进行组织，文本主要介绍其中的创建型模式。</p>
+<h2 id="单例模式singleton-pattern">单例模式（Singleton Pattern）</h2>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky3yanabj318q0iwnpd.jpg" alt="单例模式结构" loading="lazy"></figure>
+<h3 id="简述">简述</h3>
+<p>单例模式算是23中设计模式里最简单的一个了，它主要用于<strong>保证一个类仅有一个实例，并提供一个访问它的全局访问点</strong>。</p>
+<p>在程序设计中，有一些对象通常我们只需要一个共享的实例，比如线程池、全局缓存、对象池等，这种场景下就适合使用单例模式。</p>
+<p>但是，并非所有全局唯一的场景都适合使用单例模式。比如，考虑需要统计一个API调用的情况，有两个指标，成功调用次数和失败调用次数。这两个指标都是全局唯一的，所以有人可能会将其建模成两个单例<code>SuccessApiMetric</code>和<code>FailApiMetric</code>。按照这个思路，随着指标数量的增多，你会发现代码里类的定义会越来越多，也越来越臃肿。这也是单例模式最常见的误用场景，更好的方法是将两个指标设计成一个对象<code>ApiMetric</code>下的两个实例<code>ApiMetic success</code>和<code>ApiMetic fail</code>。</p>
+<p><em>如何判断一个对象是否应该被建模成单例？</em></p>
+<p>通常，被建模成单例的对象都有“<strong>中心点</strong>”的含义，比如线程池就是管理所有线程的中心。所以，在判断一个对象是否适合单例模式时，先思考下，这个对象是一个中心点吗？</p>
+<h3 id="go实现">Go实现</h3>
+<p>在对某个对象实现单例模式时，有两个点必须要注意：（1）<strong>限制调用者直接实例化该对象</strong>；（2）<strong>为该对象的单例提供一个全局唯一的访问方法</strong>。</p>
+<p>对于C++/Java而言，只需把类的构造函数设计成私有的，并提供一个<code>static</code>方法去访问该类点唯一实例即可。但对于Go语言来说，即没有构造函数的概念，也没有<code>static</code>方法，所以需要另寻出路。</p>
+<p>我们可以利用Go语言<code>package</code>的访问规则来实现，将单例结构体设计成首字母小写，就能限定其访问范围只在当前package下，模拟了C++/Java中的私有构造函数；再在当前<code>package</code>下实现一个首字母大写的访问函数，就相当于<code>static</code>方法的作用了。</p>
+<p>在实际开发中，我们经常会遇到需要频繁创建和销毁的对象。频繁的创建和销毁一则消耗CPU，二则内存的利用率也不高，通常我们都会使用对象池技术来进行优化。考虑我们需要实现一个消息对象池，因为是全局的中心点，管理所有的Message实例，所以将其实现成单例，实现代码如下：</p>
+<pre><code class="language-go">package msgpool
+...
+// 消息池
+type messagePool struct {
+    pool *sync.Pool
+}
+// 消息池单例
+var msgPool = &amp;messagePool{
+    // 如果消息池里没有消息，则新建一个Count值为0的Message实例
+    pool: &amp;sync.Pool{New: func() interface{} { return &amp;Message{Count: 0} }},
+}
+// 访问消息池单例的唯一方法
+func Instance() *messagePool {
+    return msgPool
+}
+// 往消息池里添加消息
+func (m *messagePool) AddMsg(msg *Message) {
+    m.pool.Put(msg)
+}
+// 从消息池里获取消息
+func (m *messagePool) GetMsg() *Message {
+    return m.pool.Get().(*Message)
+}
+...
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestMessagePool(t *testing.T) {
+    msg0 := msgpool.Instance().GetMsg()
+    if msg0.Count != 0 {
+        t.Errorf(&quot;expect msg count %d, but actual %d.&quot;, 0, msg0.Count)
+    }
+    msg0.Count = 1
+    msgpool.Instance().AddMsg(msg0)
+    msg1 := msgpool.Instance().GetMsg()
+    if msg1.Count != 1 {
+        t.Errorf(&quot;expect msg count %d, but actual %d.&quot;, 1, msg1.Count)
+    }
+}
+// 运行结果
+=== RUN   TestMessagePool
+--- PASS: TestMessagePool (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>以上的单例模式就是典型的“<strong>饿汉模式</strong>”，实例在系统加载的时候就已经完成了初始化。对应地，还有一种“<strong>懒汉模式</strong>”，只有等到对象被使用的时候，才会去初始化它，从而一定程度上节省了内存。众所周知，“懒汉模式”会带来线程安全问题，可以通过<strong>普通加锁</strong>，或者更高效的<strong>双重检验锁</strong>来优化。对于“懒汉模式”，Go语言有一个更优雅的实现方式，那就是利用<code>sync.Once</code>，它有一个<code>Do</code>方法，其入参是一个方法，Go语言会保证仅仅只调用一次该方法。</p>
+<pre><code class="language-go">// 单例模式的“懒汉模式”实现
+package msgpool
+...
+var once = &amp;sync.Once{}
+// 消息池单例，在首次调用时初始化
+var msgPool *messagePool
+// 全局唯一获取消息池pool到方法
+func Instance() *messagePool {
+    // 在匿名函数中实现初始化逻辑，Go语言保证只会调用一次
+    once.Do(func() {
+        msgPool = &amp;messagePool{
+            // 如果消息池里没有消息，则新建一个Count值为0的Message实例
+            pool: &amp;sync.Pool{New: func() interface{} { return &amp;Message{Count: 0} }},
+        }
+    })
+    return msgPool
+}
+...
+复制代码
+</code></pre>
+<h2 id="建造者模式builder-pattern">建造者模式（Builder Pattern）</h2>
+<figure data-type="image" tabindex="2"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky4kprezj319e0kuu0x.jpg" alt="建造者模式结构" loading="lazy"></figure>
+<h3 id="简述-2">简述</h3>
+<p>在程序设计中，我们会经常遇到一些复杂的对象，其中有很多成员属性，甚至嵌套着多个复杂的对象。这种情况下，创建这个复杂对象就会变得很繁琐。对于C++/Java而言，最常见的表现就是构造函数有着长长的参数列表：</p>
+<pre><code class="language-java">MyObject obj = new MyObject(param1, param2, param3, param4, param5, param6, ...)
+复制代码
+</code></pre>
+<p>而对于Go语言来说，最常见的表现就是多层的嵌套实例化：</p>
+<pre><code class="language-go">obj := &amp;MyObject{
+  Field1: &amp;Field1 {
+    Param1: &amp;Param1 {
+      Val: 0,
+    },
+    Param2: &amp;Param2 {
+      Val: 1,
+    },
+    ...
+  },
+  Field2: &amp;Field2 {
+    Param3: &amp;Param3 {
+      Val: 2,
+    },
+    ...
+  },
+  ...
+}
+复制代码
+</code></pre>
+<p>上述的对象创建方法有两个明显的缺点：（1）<strong>对对象使用者不友好</strong>，使用者在创建对象时需要知道的细节太多；（2）<strong>代码可读性很差</strong>。</p>
+<p><em>针对这种对象成员较多，创建对象逻辑较为繁琐的场景，就适合使用建造者模式来进行优化。</em></p>
+<p>建造者模式的作用有如下几个：</p>
+<p>1、封装复杂对象的创建过程，使对象使用者不感知复杂的创建逻辑。</p>
+<p>2、可以一步步按照顺序对成员进行赋值，或者创建嵌套对象，并最终完成目标对象的创建。</p>
+<p>3、对多个对象复用同样的对象创建逻辑。</p>
+<p>其中，第1和第2点比较常用，下面对建造者模式的实现也主要是针对这两点进行示例。</p>
+<h3 id="go实现-2">Go实现</h3>
+<p>考虑如下的一个<code>Message</code>结构体，其主要有<code>Header</code>和<code>Body</code>组成：</p>
+<pre><code class="language-go">package msg
+...
+type Message struct {
+    Header *Header
+    Body   *Body
+}
+type Header struct {
+    SrcAddr  string
+    SrcPort  uint64
+    DestAddr string
+    DestPort uint64
+    Items    map[string]string
+}
+type Body struct {
+    Items []string
+}
+...
+复制代码
+</code></pre>
+<p>如果按照直接的对象创建方式，创建逻辑应该是这样的：</p>
+<pre><code class="language-go">// 多层的嵌套实例化
+message := msg.Message{
+    Header: &amp;msg.Header{
+        SrcAddr:  &quot;192.168.0.1&quot;,
+        SrcPort:  1234,
+        DestAddr: &quot;192.168.0.2&quot;,
+        DestPort: 8080,
+        Items:    make(map[string]string),
+    },
+    Body:   &amp;msg.Body{
+        Items: make([]string, 0),
+    },
+}
+// 需要知道对象的实现细节
+message.Header.Items[&quot;contents&quot;] = &quot;application/json&quot;
+message.Body.Items = append(message.Body.Items, &quot;record1&quot;)
+message.Body.Items = append(message.Body.Items, &quot;record2&quot;)
+复制代码
+</code></pre>
+<p>虽然<code>Message</code>结构体嵌套的层次不多，但是从其创建的代码来看，确实存在<strong>对对象使用者不友好</strong>和<strong>代码可读性差</strong>的缺点。下面我们引入建造者模式对代码进行重构：</p>
+<pre><code class="language-go">package msg
+...
+// Message对象的Builder对象
+type builder struct {
+    once *sync.Once
+    msg *Message
+}
+// 返回Builder对象
+func Builder() *builder {
+    return &amp;builder{
+        once: &amp;sync.Once{},
+        msg: &amp;Message{Header: &amp;Header{}, Body: &amp;Body{}},
+    }
+}
+// 以下是对Message成员对构建方法
+func (b *builder) WithSrcAddr(srcAddr string) *builder {
+    b.msg.Header.SrcAddr = srcAddr
+    return b
+}
+func (b *builder) WithSrcPort(srcPort uint64) *builder {
+    b.msg.Header.SrcPort = srcPort
+    return b
+}
+func (b *builder) WithDestAddr(destAddr string) *builder {
+    b.msg.Header.DestAddr = destAddr
+    return b
+}
+func (b *builder) WithDestPort(destPort uint64) *builder {
+    b.msg.Header.DestPort = destPort
+    return b
+}
+func (b *builder) WithHeaderItem(key, value string) *builder {
+  // 保证map只初始化一次
+    b.once.Do(func() {
+        b.msg.Header.Items = make(map[string]string)
+    })
+    b.msg.Header.Items[key] = value
+    return b
+}
+func (b *builder) WithBodyItem(record string) *builder {
+    b.msg.Body.Items = append(b.msg.Body.Items, record)
+    return b
+}
+// 创建Message对象，在最后一步调用
+func (b *builder) Build() *Message {
+    return b.msg
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestMessageBuilder(t *testing.T) {
+  // 使用消息建造者进行对象创建
+    message := msg.Builder().
+        WithSrcAddr(&quot;192.168.0.1&quot;).
+        WithSrcPort(1234).
+        WithDestAddr(&quot;192.168.0.2&quot;).
+        WithDestPort(8080).
+        WithHeaderItem(&quot;contents&quot;, &quot;application/json&quot;).
+        WithBodyItem(&quot;record1&quot;).
+        WithBodyItem(&quot;record2&quot;).
+        Build()
+    if message.Header.SrcAddr != &quot;192.168.0.1&quot; {
+        t.Errorf(&quot;expect src address 192.168.0.1, but actual %s.&quot;, message.Header.SrcAddr)
+    }
+    if message.Body.Items[0] != &quot;record1&quot; {
+        t.Errorf(&quot;expect body item0 record1, but actual %s.&quot;, message.Body.Items[0])
+    }
+}
+// 运行结果
+=== RUN   TestMessageBuilder
+--- PASS: TestMessageBuilder (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>从测试代码可知，使用建造者模式来进行对象创建，使用者不再需要知道对象具体的实现细节，代码可读性也更好。</p>
+<h2 id="工厂方法模式factory-method-pattern">工厂方法模式（Factory Method Pattern）</h2>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkpq8hayrj31cm0sskjm.jpg" alt="工厂方法模式结构" loading="lazy"></figure>
+<h3 id="简述-3">简述</h3>
+<p>工厂方法模式跟上一节讨论的建造者模式类似，都是<strong>将对象创建的逻辑封装起来，为使用者提供一个简单易用的对象创建接口</strong>。两者在应用场景上稍有区别，建造者模式更常用于需要传递多个参数来进行实例化的场景。</p>
+<p>使用工厂方法来创建对象主要有两个好处：</p>
+<p>1、<strong>代码可读性更好</strong>。相比于使用C++/Java中的构造函数，或者Go中的<code>{}</code>来创建对象，工厂方法因为可以通过函数名来表达代码含义，从而具备更好的可读性。比如，使用工厂方法<code>productA := CreateProductA()</code>创建一个<code>ProductA</code>对象，比直接使用<code>productA := ProductA{}</code>的可读性要好。</p>
+<p>2、<strong>与使用者代码解耦</strong>。很多情况下，对象的创建往往是一个容易变化的点，通过工厂方法来封装对象的创建过程，可以在创建逻辑变更时，避免<strong>霰弹式修改</strong>。</p>
+<p>工厂方法模式也有两种实现方式：（1）提供一个工厂对象，通过调用工厂对象的工厂方法来创建产品对象；（2）将工厂方法集成到产品对象中（C++/Java中对象的<code>static</code>方法，Go中同一<code>package</code>下的函数）</p>
+<h3 id="go实现-3">Go实现</h3>
+<p>考虑有一个事件对象<code>Event</code>，分别有两种有效的时间类型<code>Start</code>和<code>End</code>：</p>
+<pre><code class="language-go">package event
+...
+type Type uint8
+// 事件类型定义
+const (
+    Start Type = iota
+    End
+)
+// 事件抽象接口
+type Event interface {
+    EventType() Type
+    Content() string
+}
+// 开始事件，实现了Event接口
+type StartEvent struct{
+    content string
+}
+...
+// 结束事件，实现了Event接口
+type EndEvent struct{
+    content string
+}
+...
+复制代码
+</code></pre>
+<p>1、按照第一种实现方式，为<code>Event</code>提供一个工厂对象，具体代码如下：</p>
+<pre><code class="language-go">package event
+...
+// 事件工厂对象
+type Factory struct{}
+// 更具事件类型创建具体事件
+func (e *Factory) Create(etype Type) Event {
+    switch etype {
+    case Start:
+        return &amp;StartEvent{
+            content: &quot;this is start event&quot;,
+        }
+    case End:
+        return &amp;EndEvent{
+            content: &quot;this is end event&quot;,
+        }
+    default:
+        return nil
+    }
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestEventFactory(t *testing.T) {
+    factory := event.Factory{}
+    e := factory.Create(event.Start)
+    if e.EventType() != event.Start {
+        t.Errorf(&quot;expect event.Start, but actual %v.&quot;, e.EventType())
+    }
+    e = factory.Create(event.End)
+    if e.EventType() != event.End {
+        t.Errorf(&quot;expect event.End, but actual %v.&quot;, e.EventType())
+    }
+}
+// 运行结果
+=== RUN   TestEventFactory
+--- PASS: TestEventFactory (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>2、按照第二种实现方式，分别给<code>Start</code>和<code>End</code>类型的<code>Event</code>单独提供一个工厂方法，代码如下：</p>
+<pre><code class="language-go">package event
+...
+// Start类型Event的工厂方法
+func OfStart() Event {
+    return &amp;StartEvent{
+        content: &quot;this is start event&quot;,
+    }
+}
+// End类型Event的工厂方法
+func OfEnd() Event {
+    return &amp;EndEvent{
+        content: &quot;this is end event&quot;,
+    }
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package event
+...
+func TestEvent(t *testing.T) {
+    e := event.OfStart()
+    if e.EventType() != event.Start {
+        t.Errorf(&quot;expect event.Start, but actual %v.&quot;, e.EventType())
+    }
+    e = event.OfEnd()
+    if e.EventType() != event.End {
+        t.Errorf(&quot;expect event.End, but actual %v.&quot;, e.EventType())
+    }
+}
+// 运行结果
+=== RUN   TestEvent
+--- PASS: TestEvent (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="抽象工厂模式abstract-factory-pattern">抽象工厂模式（Abstract Factory Pattern）</h2>
+<figure data-type="image" tabindex="4"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkxo5tf5ij31ak0om4qq.jpg" alt="抽象工厂模式结构" loading="lazy"></figure>
+<h3 id="简述-4">简述</h3>
+<p>在工厂方法模式中，我们通过一个工厂对象来创建一个产品族，具体创建哪个产品，则通过<code>swtich-case</code>的方式去判断。这也意味着该产品组上，每新增一类产品对象，都必须修改原来工厂对象的代码；而且随着产品的不断增多，工厂对象的职责也越来越重，违反了<strong>单一职责原则</strong>。</p>
+<p>抽象工厂模式通过给工厂类新增一个抽象层解决了该问题，如上图所示，<code>FactoryA</code>和<code>FactoryB</code>都实现·抽象工厂接口，分别用于创建<code>ProductA</code>和<code>ProductB</code>。如果后续新增了<code>ProductC</code>，只需新增一个<code>FactoryC</code>即可，无需修改原有的代码；因为每个工厂只负责创建一个产品，因此也遵循了<strong>单一职责原则</strong>。</p>
+<h3 id="go实现-4">Go实现</h3>
+<p>考虑需要如下一个插件架构风格的消息处理系统，<code>pipeline</code>是消息处理的管道，其中包含了<code>input</code>、<code>filter</code>和<code>output</code>三个插件。我们需要实现根据配置来创建<code>pipeline</code> ，加载插件过程的实现非常适合使用工厂模式，其中<code>input</code>、<code>filter</code>和<code>output</code>三类插件的创建使用抽象工厂模式，而<code>pipeline</code>的创建则使用工厂方法模式。</p>
+<figure data-type="image" tabindex="5"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkw23e4r3j31bs0nge82.jpg" alt="抽象工厂模式示例" loading="lazy"></figure>
+<p>各类插件和<code>pipeline</code>的接口定义如下：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件抽象接口定义
+type Plugin interface {}
+// 输入插件，用于接收消息
+type Input interface {
+    Plugin
+    Receive() string
+}
+// 过滤插件，用于处理消息
+type Filter interface {
+    Plugin
+    Process(msg string) string
+}
+// 输出插件，用于发送消息
+type Output interface {
+    Plugin
+    Send(msg string)
+}
+复制代码
+package pipeline
+...
+// 消息管道的定义
+type Pipeline struct {
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+// 一个消息的处理流程为 input -&gt; filter -&gt; output
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+复制代码
+</code></pre>
+<p>接着，我们定义<code>input</code>、<code>filter</code>、<code>output</code>三类插件接口的具体实现：</p>
+<pre><code class="language-go">package plugin
+...
+// input插件名称与类型的映射关系，主要用于通过反射创建input对象
+var inputNames = make(map[string]reflect.Type)
+// Hello input插件，接收“Hello World”消息
+type HelloInput struct {}
+
+func (h *HelloInput) Receive() string {
+    return &quot;Hello World&quot;
+}
+// 初始化input插件映射关系表
+func init() {
+    inputNames[&quot;hello&quot;] = reflect.TypeOf(HelloInput{})
+}
+复制代码
+package plugin
+...
+// filter插件名称与类型的映射关系，主要用于通过反射创建filter对象
+var filterNames = make(map[string]reflect.Type)
+// Upper filter插件，将消息全部字母转成大写
+type UpperFilter struct {}
+
+func (u *UpperFilter) Process(msg string) string {
+    return strings.ToUpper(msg)
+}
+// 初始化filter插件映射关系表
+func init() {
+    filterNames[&quot;upper&quot;] = reflect.TypeOf(UpperFilter{})
+}
+复制代码
+package plugin
+...
+// output插件名称与类型的映射关系，主要用于通过反射创建output对象
+var outputNames = make(map[string]reflect.Type)
+// Console output插件，将消息输出到控制台上
+type ConsoleOutput struct {}
+
+func (c *ConsoleOutput) Send(msg string) {
+    fmt.Println(msg)
+}
+// 初始化output插件映射关系表
+func init() {
+    outputNames[&quot;console&quot;] = reflect.TypeOf(ConsoleOutput{})
+}
+复制代码
+</code></pre>
+<p>然后，我们定义插件抽象工厂接口，以及对应插件的工厂实现：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件抽象工厂接口
+type Factory interface {
+    Create(conf Config) Plugin
+}
+// input插件工厂对象，实现Factory接口
+type InputFactory struct{}
+// 读取配置，通过反射机制进行对象实例化
+func (i *InputFactory) Create(conf Config) Plugin {
+    t, _ := inputNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+// filter和output插件工厂实现类似
+type FilterFactory struct{}
+func (f *FilterFactory) Create(conf Config) Plugin {
+    t, _ := filterNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+type OutputFactory struct{}
+func (o *OutputFactory) Create(conf Config) Plugin {
+    t, _ := outputNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+复制代码
+</code></pre>
+<p>最后定义<code>pipeline</code>的工厂方法，调用<code>plugin.Factory</code>抽象工厂完成pipelien对象的实例化：</p>
+<pre><code class="language-go">package pipeline
+...
+// 保存用于创建Plugin的工厂实例，其中map的key为插件类型，value为抽象工厂接口
+var pluginFactories = make(map[plugin.Type]plugin.Factory)
+// 根据plugin.Type返回对应Plugin类型的工厂实例
+func factoryOf(t plugin.Type) plugin.Factory {
+    factory, _ := pluginFactories[t]
+    return factory
+}
+// pipeline工厂方法，根据配置创建一个Pipeline实例
+func Of(conf Config) *Pipeline {
+    p := &amp;Pipeline{}
+    p.input = factoryOf(plugin.InputType).Create(conf.Input).(plugin.Input)
+    p.filter = factoryOf(plugin.FilterType).Create(conf.Filter).(plugin.Filter)
+    p.output = factoryOf(plugin.OutputType).Create(conf.Output).(plugin.Output)
+    return p
+}
+// 初始化插件工厂对象
+func init() {
+    pluginFactories[plugin.InputType] = &amp;plugin.InputFactory{}
+    pluginFactories[plugin.FilterType] = &amp;plugin.FilterFactory{}
+    pluginFactories[plugin.OutputType] = &amp;plugin.OutputFactory{}
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+  // 其中pipeline.DefaultConfig()的配置内容见【抽象工厂模式示例图】
+  // 消息处理流程为 HelloInput -&gt; UpperFilter -&gt; ConsoleOutput
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Exec()
+}
+// 运行结果
+=== RUN   TestPipeline
+HELLO WORLD
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="原型模式prototype-pattern">原型模式（Prototype Pattern）</h2>
+<figure data-type="image" tabindex="6"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky39ichjj319u0gqhdt.jpg" alt="原型模式结构" loading="lazy"></figure>
+<h3 id="简述-5">简述</h3>
+<p>原型模式主要解决对象复制的问题，它的核心就是<code>clone()</code>方法，返回<code>Prototype</code>对象的复制品。在程序设计过程中，往往会遇到有一些场景需要大量相同的对象，如果不使用原型模式，那么我们可能会这样进行对象的创建：<em>新创建一个相同对象的实例，然后遍历原始对象的所有成员变量， 并将成员变量值复制到新对象中</em>。这种方法的缺点很明显，那就是使用者必须知道对象的实现细节，导致代码之间的耦合。另外，对象很有可能存在除了对象本身以外不可见的变量，这种情况下该方法就行不通了。</p>
+<p>对于这种情况，更好的方法就是使用原型模式，将复制逻辑委托给对象本身，这样，上述两个问题也都迎刃而解了。</p>
+<h3 id="go实现-5">Go实现</h3>
+<p>还是以建造者模式一节中的<code>Message</code>作为例子，现在设计一个<code>Prototype</code>抽象接口：</p>
+<pre><code class="language-go">package prototype
+...
+// 原型复制抽象接口
+type Prototype interface {
+    clone() Prototype
+}
+
+type Message struct {
+    Header *Header
+    Body   *Body
+}
+
+func (m *Message) clone() Prototype {
+    msg := *m
+    return &amp;msg
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPrototype(t *testing.T) {
+    message := msg.Builder().
+        WithSrcAddr(&quot;192.168.0.1&quot;).
+        WithSrcPort(1234).
+        WithDestAddr(&quot;192.168.0.2&quot;).
+        WithDestPort(8080).
+        WithHeaderItem(&quot;contents&quot;, &quot;application/json&quot;).
+        WithBodyItem(&quot;record1&quot;).
+        WithBodyItem(&quot;record2&quot;).
+        Build()
+  // 复制一份消息
+    newMessage := message.Clone().(*msg.Message)
+    if newMessage.Header.SrcAddr != message.Header.SrcAddr {
+        t.Errorf(&quot;Clone Message failed.&quot;)
+    }
+    if newMessage.Body.Items[0] != message.Body.Items[0] {
+        t.Errorf(&quot;Clone Message failed.&quot;)
+    }
+}
+// 运行结果
+=== RUN   TestPrototype
+--- PASS: TestPrototype (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>本文主要介绍了GoF的23种设计模式中的5种创建型模式，创建型模式的目的都是<strong>提供一个简单的接口，让对象的创建过程与使用者解耦</strong>。其中，<strong>单例模式</strong>主要用于保证一个类仅有一个实例，并提供一个访问它的全局访问点；<strong>建造者模式</strong>主要解决需要创建对象时需要传入多个参数，或者对初始化顺序有要求的场景；<strong>工厂方法模式</strong>通过提供一个工厂对象或者工厂方法，为使用者隐藏了对象创建的细节；<strong>抽象工厂模式</strong>是对工厂方法模式的优化，通过为工厂对象新增一个抽象层，让工厂对象遵循单一职责原则，也避免了霰弹式修改；<strong>原型模式</strong>则让对象复制更加简单。</p>
+<p>下一篇文章，将介绍23种设计模式中的7种<strong>结构型模式</strong>（Structural Pattern），及其Go语言的实现。</p>
+
+            </div>
+            
+            
+              <div class="post-footer">
+  <ul class="post-copyright">
+    <li class="post-copyright-author">
+      <strong class="language" data-lan="author">本文作者：</strong>
+      ChicRingo
+    </li>
+    <li class="post-copyright-link">
+      <strong class="language" data-lan="link">本文链接：</strong>
+      <a href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/" title="使用Go实现GoF的23种设计模式（一）">https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/</a>
+    </li>
+    <li class="post-copyright-license">
+      <strong class="language" data-lan="copyright">版权声明： </strong>
+      本博客所有文章除特别声明外，均采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i> BY-NC-SA</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+  <div class="tags">
+    
+  </div>
+  <div class="nav">
+    <div class="nav-prev">
+      
+        <i class="fa fa-chevron-left"></i>
+        <a class="nav-pc-next" title="使用Go实现GoF的23种设计模式（二）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">使用Go实现GoF的23种设计模式（二）</a class="nav-pc-next">
+        <a class="nav-mobile-prev" title="使用Go实现GoF的23种设计模式（二）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">上一篇</a>
+      
+    </div>
+    <div class="nav-next">
+      
+        <a class="nav-pc-next" title="用 golang 实现的十大经典排序" href="https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/">用 golang 实现的十大经典排序</a>
+        <a class="nav-mobile-next" title="用 golang 实现的十大经典排序" href="https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/">下一篇</a>
+        <i class="fa fa-chevron-right"></i>
+      
+    </div>
+  </div>
+</div>
+            
+            
+  
+
+          </div>
         </div>
       </div>
     </div>
@@ -1407,6 +1934,253 @@
   }
 
 </script>
+    <div class="light-box" id="light_box"></div>
+<script>
+  let imgs = document.querySelectorAll('.post-body img');
+  let lightBox = document.querySelector('#light_box');
+  lightBox.addEventListener('mousedown', (e) => {
+    e.preventDefault()
+  })
+  lightBox.addEventListener('mousewheel', (e) => {
+    e.preventDefault()
+  })
+  let width = window.innerWidth * 0.8;
+  lightBox.onclick = () => {
+    let img = lightBox.querySelector('img');
+    lightBox.style = '';
+    img && img.remove();
+  }
+  imgs.forEach(item => {
+    item.onclick = function (e) {
+      let lightImg = document.createElement('img');
+      lightImg.src = this.src;
+      lightBox.style = `height: 100%; opacity: 1; background-color: rgba(0, 0, 0, 0.5);cursor: zoom-out;`;
+      lightImg.style = `width: ${width}px;border-radius: 2px;`;
+      lightImg.onclick = function () {
+        lightBox.style = '';
+        this.remove();
+      }
+      lightBox.append(lightImg);
+    }
+  })
+</script>
+    <div class="reward-mask" style="display: none;">
+  <div class="reward-relative">
+    <span class="close" aria-hidden="true">x</span>
+    <div class="reward-body">
+      <h2>感谢您的支持，我会继续努力的!</h2>
+      <div class="reward-img-box">
+        <div style="position: relative; width: 140px; height: 140px;">
+          
+          
+          
+        </div>
+      </div>
+      <p class="reward-word">扫码打赏，你说多少就多少</p>
+      <p class="reward-tip">打开微信扫一扫，即可进行扫码打赏哦</p>
+    </div>
+    <div class="bottom">
+      
+      
+    </div>
+  </div>
+</div>
+<style>
+  .reward-mask {
+    position: fixed;
+    z-index: 99999;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #00000054;
+  }
+
+  .reward-relative {
+    position: relative;
+    width: 480px;
+    text-align: center;
+    margin: 0 auto;
+    border-radius: 5px;
+    background-color: #fff;
+    top: 50%;
+    margin-top: -205px;
+  }
+
+  .reward-relative .close {
+    position: absolute;
+    right: 10px;
+    font-weight: normal;
+    font-size: 16px;
+    color: #929292;
+  }
+
+  .reward-body {
+    padding: 40px 20px 20px;
+  }
+
+  .bottom {
+    display: flex;
+  }
+
+  .reward-btn {
+    text-align: center;
+  }
+
+  .reward-btn-text {
+    display: inline-block;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    background-color: #ff9734;
+    color: #FFF;
+    margin-top: 20px;
+  }
+
+  .pay-text {
+    margin-top: 10px;
+    padding: 10px;
+    flex: 1;
+    transition: all .2s linear;
+  }
+
+  .pay-text:hover {
+    background-color: #a5a5a536;
+  }
+
+  .reward-body h2 {
+    padding-top: 10px;
+    text-align: center;
+    color: #a3a3a3;
+    font-size: 16px;
+    font-weight: normal;
+    margin: 0 0 20px;
+  }
+
+  .reward-body h2:after,
+  .reward-body h2:before {
+    font-family: Arial, Helvetica, sans-serif;
+    background: 0 0;
+    width: 0;
+    height: 0;
+    font-style: normal;
+    color: #eee;
+    font-size: 80px;
+    position: absolute;
+    top: 20px;
+  }
+
+  .reward-body h2:before {
+    content: '\201c';
+    left: 50px;
+  }
+
+  .reward-body h2:after {
+    content: '\201d';
+    right: 80px;
+  }
+
+  .reward-img-box {
+    display: inline-block;
+    padding: 10px;
+    border: 6px solid #ea5f00;
+    margin: 0 auto;
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .reward-img {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (max-width: 767px) {
+    .reward-relative {
+      height: 100%;
+      top: 0px;
+      margin-top: 0;
+      width: auto;
+    }
+
+    .reward-relative .bottom {
+      flex-direction: column;
+    }
+
+    .reward-relative .pay-text {
+      width: 80%;
+      margin: 5px auto;
+      border: 1px solid silver;
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .reward-body h2:after {
+      right: 40px;
+    }
+
+    .reward-body h2:after,
+    .reward-body h2:before {
+      font-size: 60px;
+    }
+
+    .reward-body h2:before {
+      left: 20px;
+    }
+  }
+</style>
+<script>
+  !function () {
+    var mask = document.querySelector('.reward-mask');
+    let close = document.querySelector('.reward-relative .close');
+    let rewardBtn = document.querySelector('.reward-btn');
+
+    let zfb = document.querySelector('#zfb'),
+      wx = document.querySelector('#wx'),
+      zfbBtn = document.querySelector('#zfbBtn'),
+      wxBtn = document.querySelector('#wxBtn');
+
+    if (zfbBtn && wxBtn) {
+      zfbBtn.addEventListener('click', () => {
+        window.Velocity(zfb, 'transition.slideLeftIn', {
+          duration: 400
+        });
+        window.Velocity(wx, 'transition.slideRightOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+
+      wxBtn.addEventListener('click', () => {
+        window.Velocity(wx, 'transition.slideRightIn', {
+          duration: 400
+        });
+        window.Velocity(zfb, 'transition.slideLeftOut', {
+          display: 'none',
+          duration: 400
+        });
+      });
+    }
+
+    rewardBtn.addEventListener('click', (e) => {
+      window.Velocity(mask, 'transition.slideDownIn', {
+        duration: 400
+      })
+    });
+
+    close.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.Velocity(mask, 'transition.slideUpOut', {
+        duration: 400
+      })
+    })
+  }()
+</script>
+
   </div>
 </body>
 
@@ -4807,7 +5581,6 @@ OK
 
 
 <script src="/media/js/cool.js"></script>
-
 
 
 

@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://ChicRingo.github.io</id>
     <title>ChicRingo个人博客</title>
-    <updated>2020-08-28T05:07:16.390Z</updated>
+    <updated>2020-08-28T15:24:11.978Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://ChicRingo.github.io"/>
     <link rel="self" href="https://ChicRingo.github.io/atom.xml"/>
@@ -10,6 +10,1044 @@
     <logo>https://ChicRingo.github.io/images/avatar.png</logo>
     <icon>https://ChicRingo.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, ChicRingo个人博客</rights>
+    <entry>
+        <title type="html"><![CDATA[使用Go实现GoF的23种设计模式（二）]]></title>
+        <id>https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/</id>
+        <link href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">
+        </link>
+        <updated>2020-08-28T15:15:08.000Z</updated>
+        <summary type="html"><![CDATA[<p>作者：元闰子<br>
+链接：https://juejin.im/post/6864011017384132621<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>作者：元闰子<br>
+链接：https://juejin.im/post/6864011017384132621<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+<!-- more -->
+<h2 id="前言">前言</h2>
+<p>上一篇文章<a href="https://juejin.im/post/6859015515344633863">《使用Go实现GoF的23种设计模式（一）》</a>介绍了23种设计模式中的<strong>创建型模式</strong>（Creational Pattern），创建型模式是处理对象创建的一类设计模式，主要思想是<strong>向对象的使用者隐藏对象创建的具体细节</strong>，从而达到解耦的目的。本文主要聚焦在<strong>结构型模式</strong>（Structural Pattern）上，其主要思想是<strong>将多个对象组装成较大的结构，并同时保持结构的灵活和高效</strong>，从程序的结构上解决模块之间的耦合问题。</p>
+<h2 id="组合模式composite-pattern">组合模式（Composite Pattern）</h2>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1ghvdqutjd5j312k0iue81.jpg" alt="组合模式结构" loading="lazy"></figure>
+<h3 id="简述">简述</h3>
+<p>在面向对象编程中，有两个常见的对象设计方法，<strong>组合</strong>和<strong>继承</strong>，两者都可以解决代码复用的问题，但是使用后者时容易出现继承层次过深，对象关系过于复杂的副作用，从而导致代码的可维护性变差。因此，一个经典的面向对象设计原则是：<strong>组合优于继承</strong>。</p>
+<p>我们都知道，组合所表示的语义为“has-a”，也就是部分和整体的关系，最经典的组合模式描述如下：</p>
+<blockquote>
+<p>将对象组合成树形结构以表示“部分-整体”的层次结构，使得用户对单个对象和组合对象的使用具有一致性。</p>
+</blockquote>
+<p>Go语言天然就支持了组合模式，而且从它不支持继承关系的特点来看，Go也奉行了<strong>组合优于继承</strong>的原则，鼓励大家在进行程序设计时多采用组合的方法。Go实现组合模式的方式有两种，分别是<strong>直接组合</strong>（Direct Composition）和<strong>嵌入组合</strong>（Embedding Composition），下面我们一起探讨这两种不同的实现方法。</p>
+<h3 id="go实现">Go实现</h3>
+<p><em>直接组合（Direct Composition）的实现方式类似于Java/C++，就是将一个对象作为另一个对象的成员属性。</em></p>
+<p>一个典型的实现如<a href="https://juejin.im/post/6859015515344633863">《使用Go实现GoF的23种设计模式（一）》</a>中所举的例子，一个<code>Message</code>结构体，由<code>Header</code>和<code>Body</code>所组成。那么<code>Message</code>就是一个整体，而<code>Header</code>和<code>Body</code>则为消息的组成部分。</p>
+<pre><code class="language-go">type Message struct {
+    Header *Header
+    Body   *Body
+}
+复制代码
+</code></pre>
+<p>现在，我们来看一个稍微复杂一点的例子，同样考虑上一篇文章中所描述的插件架构风格的消息处理系统。前面我们用<strong>抽象工厂模式</strong>解决了插件加载的问题，通常，每个插件都会有一个生命周期，常见的就是启动状态和停止状态，现在我们使用<strong>组合模式</strong>来解决插件的启动和停止问题。</p>
+<p>首先给<code>Plugin</code>接口添加几个生命周期相关的方法：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件运行状态
+type Status uint8
+
+const (
+    Stopped Status = iota
+    Started
+)
+
+type Plugin interface {
+  // 启动插件
+    Start()
+  // 停止插件
+    Stop()
+  // 返回插件当前的运行状态
+    Status() Status
+}
+// Input、Filter、Output三类插件接口的定义跟上一篇文章类似
+// 这里使用Message结构体替代了原来的string，使得语义更清晰
+type Input interface {
+    Plugin
+    Receive() *msg.Message
+}
+
+type Filter interface {
+    Plugin
+    Process(msg *msg.Message) *msg.Message
+}
+
+type Output interface {
+    Plugin
+    Send(msg *msg.Message)
+}
+
+复制代码
+</code></pre>
+<p>对于插件化的消息处理系统而言，一切皆是插件，因此我们将<code>Pipeine</code>也设计成一个插件，实现<code>Plugin</code>接口：</p>
+<pre><code class="language-go">package pipeline
+...
+// 一个Pipeline由input、filter、output三个Plugin组成
+type Pipeline struct {
+    status plugin.Status
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+// 启动的顺序 output -&gt; filter -&gt; input
+func (p *Pipeline) Start() {
+    p.output.Start()
+    p.filter.Start()
+    p.input.Start()
+    p.status = plugin.Started
+    fmt.Println(&quot;Hello input plugin started.&quot;)
+}
+// 停止的顺序 input -&gt; filter -&gt; output
+func (p *Pipeline) Stop() {
+    p.input.Stop()
+    p.filter.Stop()
+    p.output.Stop()
+    p.status = plugin.Stopped
+    fmt.Println(&quot;Hello input plugin stopped.&quot;)
+}
+
+func (p *Pipeline) Status() plugin.Status {
+    return p.status
+}
+
+复制代码
+</code></pre>
+<p>一个<code>Pipeline</code>由<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件组成，形成了“部分-整体”的关系，而且它们都实现了<code>Plugin</code>接口，这就是一个典型的组合模式的实现。Client无需显式地启动和停止<code>Input</code>、<code>Filter</code>和<code>Output</code>插件，在调用<code>Pipeline</code>对象的<code>Start</code>和<code>Stop</code>方法时，<code>Pipeline</code>就已经帮你按顺序完成对应插件的启动和停止。</p>
+<p>相比于上一篇文章，在本文中实现<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件时，需要多实现3个生命周期的方法。还是以上一篇文章中的<code>HelloInput</code>、<code>UpperFilter</code>和<code>ConsoleOutput</code>作为例子，具体实现如下：</p>
+<pre><code class="language-go">package plugin
+...
+type HelloInput struct {
+    status Status
+}
+
+func (h *HelloInput) Receive() *msg.Message {
+  // 如果插件未启动，则返回nil
+    if h.status != Started {
+        fmt.Println(&quot;Hello input plugin is not running, input nothing.&quot;)
+        return nil
+    }
+    return msg.Builder().
+        WithHeaderItem(&quot;content&quot;, &quot;text&quot;).
+        WithBodyItem(&quot;Hello World&quot;).
+        Build()
+}
+
+func (h *HelloInput) Start() {
+    h.status = Started
+    fmt.Println(&quot;Hello input plugin started.&quot;)
+}
+
+func (h *HelloInput) Stop() {
+    h.status = Stopped
+    fmt.Println(&quot;Hello input plugin stopped.&quot;)
+}
+
+func (h *HelloInput) Status() Status {
+    return h.status
+}
+复制代码
+package plugin
+...
+type UpperFilter struct {
+    status Status
+}
+
+func (u *UpperFilter) Process(msg *msg.Message) *msg.Message {
+    if u.status != Started {
+        fmt.Println(&quot;Upper filter plugin is not running, filter nothing.&quot;)
+        return msg
+    }
+    for i, val := range msg.Body.Items {
+        msg.Body.Items[i] = strings.ToUpper(val)
+    }
+    return msg
+}
+
+func (u *UpperFilter) Start() {
+    u.status = Started
+    fmt.Println(&quot;Upper filter plugin started.&quot;)
+}
+
+func (u *UpperFilter) Stop() {
+    u.status = Stopped
+    fmt.Println(&quot;Upper filter plugin stopped.&quot;)
+}
+
+func (u *UpperFilter) Status() Status {
+    return u.status
+}
+
+复制代码
+package plugin
+...
+type ConsoleOutput struct {
+    status Status
+}
+
+func (c *ConsoleOutput) Send(msg *msg.Message) {
+    if c.status != Started {
+        fmt.Println(&quot;Console output is not running, output nothing.&quot;)
+        return
+    }
+    fmt.Printf(&quot;Output:\n\tHeader:%+v, Body:%+v\n&quot;, msg.Header.Items, msg.Body.Items)
+}
+
+func (c *ConsoleOutput) Start() {
+    c.status = Started
+    fmt.Println(&quot;Console output plugin started.&quot;)
+}
+
+func (c *ConsoleOutput) Stop() {
+    c.status = Stopped
+    fmt.Println(&quot;Console output plugin stopped.&quot;)
+}
+
+func (c *ConsoleOutput) Status() Status {
+    return c.status
+}
+
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestPipeline
+Console output plugin started.
+Upper filter plugin started.
+Hello input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:text], Body:[HELLO WORLD]
+Hello input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Hello input plugin stopped.
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<p><em>组合模式的另一种实现，嵌入组合（Embedding Composition），其实就是利用了Go语言的匿名成员特性，本质上跟直接组合是一致的。</em></p>
+<p>还是以Message结构体为例，如果采用嵌入组合，则看起来像是这样：</p>
+<pre><code class="language-go">type Message struct {
+    Header
+    Body
+}
+// 使用时，Message可以引用Header和Body的成员属性，例如：
+msg := &amp;Message{}
+msg.SrcAddr = &quot;192.168.0.1&quot;
+复制代码
+</code></pre>
+<h2 id="适配器模式adapter-pattern">适配器模式（Adapter Pattern）</h2>
+<figure data-type="image" tabindex="2"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghzyia5t19j315w0k0kjl.jpg" alt="适配器模式结构" loading="lazy"></figure>
+<h3 id="简述-2">简述</h3>
+<p>适配器模式是最常用的结构型模式之一，它让原本因为接口不匹配而无法一起工作的两个对象能够一起工作。在现实生活中，适配器模式也是处处可见，比如电源插头转换器，可以让英式的插头工作在中式的插座上。适配器模式所做的就是<strong>将一个接口<code>Adaptee</code>，通过适配器<code>Adapter</code>转换成Client所期望的另一个接口<code>Target</code>来使用</strong>，实现原理也很简单，就是<code>Adapter</code>通过实现<code>Target</code>接口，并在对应的方法中调用<code>Adaptee</code>的接口实现。</p>
+<p>一个典型的应用场景是，<em>系统中一个老的接口已经过时即将废弃，但因为历史包袱没法立即将老接口全部替换为新接口，这时可以新增一个适配器，将老的接口适配成新的接口来使用</em>。适配器模式很好的践行了面向对象设计原则里的<strong>开闭原则</strong>（open/closed principle），新增一个接口时也无需修改老接口，只需多加一个适配层即可。</p>
+<h3 id="go实现-2">Go实现</h3>
+<p>继续考虑上一节的消息处理系统例子，目前为止，系统的输入都源自于<code>HelloInput</code>，现在假设需要给系统新增从Kafka消息队列中接收数据的功能，其中Kafka消费者的接口如下：</p>
+<pre><code class="language-go">package kafka
+...
+type Records struct {
+    Items []string
+}
+
+type Consumer interface {
+    Poll() Records
+}
+复制代码
+</code></pre>
+<p>由于当前<code>Pipeline</code>的设计是通过<code>plugin.Input</code>接口来进行数据接收，因此<code>kafka.Consumer</code>并不能直接集成到系统中。</p>
+<p><em>怎么办？使用适配器模式！</em></p>
+<p>为了能让<code>Pipeline</code>能够使用<code>kafka.Consumer</code>接口，我们需要定义一个适配器如下：</p>
+<pre><code class="language-go">package plugin
+...
+type KafkaInput struct {
+    status Status
+    consumer kafka.Consumer
+}
+
+func (k *KafkaInput) Receive() *msg.Message {
+    records := k.consumer.Poll()
+    if k.status != Started {
+        fmt.Println(&quot;Kafka input plugin is not running, input nothing.&quot;)
+        return nil
+    }
+    return msg.Builder().
+        WithHeaderItem(&quot;content&quot;, &quot;kafka&quot;).
+        WithBodyItems(records.Items).
+        Build()
+}
+
+// 在输入插件映射关系中加入kafka，用于通过反射创建input对象
+func init() {
+    inputNames[&quot;hello&quot;] = reflect.TypeOf(HelloInput{})
+    inputNames[&quot;kafka&quot;] = reflect.TypeOf(KafkaInput{})
+}
+...
+复制代码
+</code></pre>
+<p>因为Go语言并没有构造函数，如果按照上一篇文章中的<strong>抽象工厂模式</strong>来创建<code>KafkaInput</code>，那么得到的实例中的<code>consumer</code>成员因为没有被初始化而会是<code>nil</code>。因此，需要给<code>Plugin</code>接口新增一个<code>Init</code>方法，用于定义插件的一些初始化操作，并在工厂返回实例前调用。</p>
+<pre><code class="language-go">package plugin
+...
+type Plugin interface {
+    Start()
+    Stop()
+    Status() Status
+    // 新增初始化方法，在插件工厂返回实例前调用
+    Init()
+}
+
+// 修改后的插件工厂实现如下
+func (i *InputFactory) Create(conf Config) Plugin {
+    t, _ := inputNames[conf.Name]
+    p := reflect.New(t).Interface().(Plugin)
+  // 返回插件实例前调用Init函数，完成相关初始化方法
+    p.Init()
+    return p
+}
+
+// KakkaInput的Init函数实现
+func (k *KafkaInput) Init() {
+    k.consumer = &amp;kafka.MockConsumer{}
+}
+复制代码
+</code></pre>
+<p>上述代码中的<code>kafka.MockConsumer</code>为我们模式Kafka消费者的一个实现，代码如下：</p>
+<pre><code class="language-go">package kafka
+...
+type MockConsumer struct {}
+
+func (m *MockConsumer) Poll() *Records {
+    records := &amp;Records{}
+    records.Items = append(records.Items, &quot;i am mock consumer.&quot;)
+    return records
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestKafkaInputPipeline(t *testing.T) {
+    config := pipeline.Config{
+        Name: &quot;pipeline2&quot;,
+        Input: plugin.Config{
+            PluginType: plugin.InputType,
+            Name:       &quot;kafka&quot;,
+        },
+        Filter: plugin.Config{
+            PluginType: plugin.FilterType,
+            Name:       &quot;upper&quot;,
+        },
+        Output: plugin.Config{
+            PluginType: plugin.OutputType,
+            Name:       &quot;console&quot;,
+        },
+    }
+    p := pipeline.Of(config)
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestKafkaInputPipeline
+Console output plugin started.
+Upper filter plugin started.
+Kafka input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:kafka], Body:[I AM MOCK CONSUMER.]
+Kafka input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Pipeline stopped.
+--- PASS: TestKafkaInputPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="桥接模式bridge-pattern">桥接模式（Bridge Pattern）</h2>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi00awfcxcj31f20l01ky.jpg" alt="桥接模式结构" loading="lazy"></figure>
+<h3 id="简述-3">简述</h3>
+<p>桥接模式主要用于<strong>将抽象部分和实现部分进行解耦，使得它们能够各自往独立的方向变化</strong>。它解决了在模块有多种变化方向的情况下，用继承所导致的类爆炸问题。举一个例子，一个产品有形状和颜色两个特征（变化方向），其中形状分为方形和圆形，颜色分为红色和蓝色。如果采用继承的设计方案，那么就需要新增4个产品子类：方形红色、圆形红色、方形蓝色、圆形红色。如果形状总共有m种变化，颜色有n种变化，那么就需要新增m*n个产品子类！现在我们使用桥接模式进行优化，将形状和颜色分别设计为一个抽象接口独立出来，这样需要新增2个形状子类：方形和圆形，以及2个颜色子类：红色和蓝色。同样，如果形状总共有m种变化，颜色有n种变化，总共只需要新增m+n个子类！</p>
+<figure data-type="image" tabindex="4"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi01kwmua8j31hs0s47wj.jpg" alt="桥接模式示例" loading="lazy"></figure>
+<p>上述例子中，我们通过将形状和颜色抽象为一个接口，使产品不再依赖于具体的形状和颜色细节，从而达到了解耦的目的。<strong>桥接模式本质上就是面向接口编程，可以给系统带来很好的灵活性和可扩展性</strong>。如果一个对象存在多个变化的方向，而且每个变化方向都需要扩展，那么使用桥接模式进行设计那是再合适不过了。</p>
+<h3 id="go实现-3">Go实现</h3>
+<p>回到消息处理系统的例子，一个<code>Pipeline</code>对象主要由<code>Input</code>、<code>Filter</code>、<code>Output</code>三类插件组成（<strong>3个特征</strong>），因为是插件化的系统，不可避免的就要求支持多种<code>Input</code>、<code>Filter</code>、<code>Output</code>的实现，并能够灵活组合（<strong>有多个变化的方向</strong>）。显然，<code>Pipeline</code>就非常适合使用桥接模式进行设计，实际上我们也这么做了。我们将<code>Input</code>、<code>Filter</code>、<code>Output</code>分别设计成一个抽象的接口，它们按照各自的方向去扩展。<code>Pipeline</code>只依赖的这3个抽象接口，并不感知具体实现的细节。</p>
+<figure data-type="image" tabindex="5"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1gi0i6xpj9sj318a0nk4qq.jpg" alt="使用桥接模式设计的Pipeline" loading="lazy"></figure>
+<pre><code class="language-go">package plugin
+...
+type Input interface {
+    Plugin
+    Receive() *msg.Message
+}
+
+type Filter interface {
+    Plugin
+    Process(msg *msg.Message) *msg.Message
+}
+
+type Output interface {
+    Plugin
+    Send(msg *msg.Message)
+}
+复制代码
+package pipeline
+...
+// 一个Pipeline由input、filter、output三个Plugin组成
+type Pipeline struct {
+    status plugin.Status
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+// 通过抽象接口来使用，看不到底层的实现细节
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Start()
+    p.Exec()
+    p.Stop()
+}
+// 运行结果
+=== RUN   TestPipeline
+Console output plugin started.
+Upper filter plugin started.
+Hello input plugin started.
+Pipeline started.
+Output:
+    Header:map[content:text], Body:[HELLO WORLD]
+Hello input plugin stopped.
+Upper filter plugin stopped.
+Console output plugin stopped.
+Pipeline stopped.
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>本文主要介绍了结构型模式中的组合模式、适配器模式和桥接模式。<strong>组合模式</strong>主要解决代码复用的问题，相比于继承关系，组合模式可以避免继承层次过深导致的代码复杂问题，因此面向对象设计领域流传着<strong>组合优于继承</strong>的原则，而Go语言的设计也很好实践了该原则；<strong>适配器模式</strong>可以看作是两个不兼容接口之间的桥梁，可以将一个接口转换成Client所希望的另外一个接口，解决了模块之间因为接口不兼容而无法一起工作的问题；<strong>桥接模式</strong>将模块的抽象部分和实现部分进行分离，让它们能够往各自的方向扩展，从而达到解耦的目的。</p>
+<p>下一篇文章，我们将继续聚焦于结构型模式，介绍完剩余的4种结模式：装饰模式、外观模式、享元模式和代理模式。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[使用Go实现GoF的23种设计模式（一）]]></title>
+        <id>https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/</id>
+        <link href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">
+        </link>
+        <updated>2020-08-28T15:14:07.000Z</updated>
+        <summary type="html"><![CDATA[<p>作者：元闰子<br>
+链接：https://juejin.im/post/6859015515344633863<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>作者：元闰子<br>
+链接：https://juejin.im/post/6859015515344633863<br>
+来源：掘金<br>
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</p>
+<!-- more -->
+<h2 id="前言">前言</h2>
+<p>从1995年GoF提出23种<strong>设计模式</strong>到现在，25年过去了，设计模式依旧是软件领域的热门话题。在当下，如果你不会一点设计模式，都不好意思说自己是一个合格的程序员。设计模式通常被定义为：</p>
+<blockquote>
+<p>设计模式（Design Pattern）是一套被反复使用、多数人知晓的、经过分类编目的、代码设计经验的总结，使用设计模式是为了可重用代码、让代码更容易被他人理解并且保证代码可靠性。</p>
+</blockquote>
+<p>从定义上看，<strong>设计模式其实是一种经验的总结，是针对特定问题的简洁而优雅的解决方案</strong>。既然是经验总结，那么学习设计模式最直接的好处就在于可以站在巨人的肩膀上解决软件开发过程中的一些特定问题。然而，学习设计模式的最高境界是习得其中解决问题所用到的思想，当你把它们的本质思想吃透了，也就能做到<strong>即使已经忘掉某个设计模式的名称和结构，也能在解决特定问题时信手拈来</strong>。</p>
+<p>好的东西有人吹捧，当然也会招黑。设计模式被抨击主要因为以下两点：</p>
+<p>1、<em>设计模式会增加代码量，把程序逻辑变得复杂</em>。这一点是不可避免的，但是我们并不能仅仅只考虑开发阶段的成本。最简单的程序当然是一个函数从头写到尾，但是这样后期的维护成本会变得非常大；而设计模式虽然增加了一点开发成本，但是能让人们写出可复用、可维护性高的程序。引用《软件设计的哲学》里的概念，前者就是<strong>战术编程</strong>，后者就是<strong>战略编程</strong>，我们应该<strong>对战术编程Say No</strong>！（请移步<a href="https://www.yrunz.com/archives/%E4%B8%80%E6%AD%A5%E6%AD%A5%E9%99%8D%E4%BD%8E%E8%BD%AF%E4%BB%B6%E5%A4%8D%E6%9D%82%E6%80%A7">《一步步降低软件复杂性》</a>）</p>
+<p>2、<em>滥用设计模式</em>。这是初学者最容易犯的错误，当学到一个模式时，恨不得在所有的代码都用上，从而在不该使用模式的地方刻意地使用了模式，导致了程序变得异常复杂。其实每个设计模式都有几个关键要素：<strong>适用场景</strong>、<strong>解决方法</strong>、<strong>优缺点</strong>。模式并不是万能药，它只有在特定的问题上才能显现出效果。所以，在使用一个模式前，先问问自己，当前的这个场景适用这个模式吗？</p>
+<p>《设计模式》一书的副标题是“可复用面向对象软件的基础”，但并不意味着只有面向对象语言才能使用设计模式。模式只是一种解决特定问题的思想，跟语言无关。就像Go语言一样，它并非是像C++和Java一样的面向对象语言，但是设计模式同样适用。本系列文章将使用Go语言来实现GoF提出的23种设计模式，按照<strong>创建型模式</strong>（Creational Pattern）、<strong>结构型模式</strong>（Structural Pattern）和<strong>行为型模式</strong>（Behavioral Pattern）三种类别进行组织，文本主要介绍其中的创建型模式。</p>
+<h2 id="单例模式singleton-pattern">单例模式（Singleton Pattern）</h2>
+<figure data-type="image" tabindex="1"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky3yanabj318q0iwnpd.jpg" alt="单例模式结构" loading="lazy"></figure>
+<h3 id="简述">简述</h3>
+<p>单例模式算是23中设计模式里最简单的一个了，它主要用于<strong>保证一个类仅有一个实例，并提供一个访问它的全局访问点</strong>。</p>
+<p>在程序设计中，有一些对象通常我们只需要一个共享的实例，比如线程池、全局缓存、对象池等，这种场景下就适合使用单例模式。</p>
+<p>但是，并非所有全局唯一的场景都适合使用单例模式。比如，考虑需要统计一个API调用的情况，有两个指标，成功调用次数和失败调用次数。这两个指标都是全局唯一的，所以有人可能会将其建模成两个单例<code>SuccessApiMetric</code>和<code>FailApiMetric</code>。按照这个思路，随着指标数量的增多，你会发现代码里类的定义会越来越多，也越来越臃肿。这也是单例模式最常见的误用场景，更好的方法是将两个指标设计成一个对象<code>ApiMetric</code>下的两个实例<code>ApiMetic success</code>和<code>ApiMetic fail</code>。</p>
+<p><em>如何判断一个对象是否应该被建模成单例？</em></p>
+<p>通常，被建模成单例的对象都有“<strong>中心点</strong>”的含义，比如线程池就是管理所有线程的中心。所以，在判断一个对象是否适合单例模式时，先思考下，这个对象是一个中心点吗？</p>
+<h3 id="go实现">Go实现</h3>
+<p>在对某个对象实现单例模式时，有两个点必须要注意：（1）<strong>限制调用者直接实例化该对象</strong>；（2）<strong>为该对象的单例提供一个全局唯一的访问方法</strong>。</p>
+<p>对于C++/Java而言，只需把类的构造函数设计成私有的，并提供一个<code>static</code>方法去访问该类点唯一实例即可。但对于Go语言来说，即没有构造函数的概念，也没有<code>static</code>方法，所以需要另寻出路。</p>
+<p>我们可以利用Go语言<code>package</code>的访问规则来实现，将单例结构体设计成首字母小写，就能限定其访问范围只在当前package下，模拟了C++/Java中的私有构造函数；再在当前<code>package</code>下实现一个首字母大写的访问函数，就相当于<code>static</code>方法的作用了。</p>
+<p>在实际开发中，我们经常会遇到需要频繁创建和销毁的对象。频繁的创建和销毁一则消耗CPU，二则内存的利用率也不高，通常我们都会使用对象池技术来进行优化。考虑我们需要实现一个消息对象池，因为是全局的中心点，管理所有的Message实例，所以将其实现成单例，实现代码如下：</p>
+<pre><code class="language-go">package msgpool
+...
+// 消息池
+type messagePool struct {
+    pool *sync.Pool
+}
+// 消息池单例
+var msgPool = &amp;messagePool{
+    // 如果消息池里没有消息，则新建一个Count值为0的Message实例
+    pool: &amp;sync.Pool{New: func() interface{} { return &amp;Message{Count: 0} }},
+}
+// 访问消息池单例的唯一方法
+func Instance() *messagePool {
+    return msgPool
+}
+// 往消息池里添加消息
+func (m *messagePool) AddMsg(msg *Message) {
+    m.pool.Put(msg)
+}
+// 从消息池里获取消息
+func (m *messagePool) GetMsg() *Message {
+    return m.pool.Get().(*Message)
+}
+...
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestMessagePool(t *testing.T) {
+    msg0 := msgpool.Instance().GetMsg()
+    if msg0.Count != 0 {
+        t.Errorf(&quot;expect msg count %d, but actual %d.&quot;, 0, msg0.Count)
+    }
+    msg0.Count = 1
+    msgpool.Instance().AddMsg(msg0)
+    msg1 := msgpool.Instance().GetMsg()
+    if msg1.Count != 1 {
+        t.Errorf(&quot;expect msg count %d, but actual %d.&quot;, 1, msg1.Count)
+    }
+}
+// 运行结果
+=== RUN   TestMessagePool
+--- PASS: TestMessagePool (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>以上的单例模式就是典型的“<strong>饿汉模式</strong>”，实例在系统加载的时候就已经完成了初始化。对应地，还有一种“<strong>懒汉模式</strong>”，只有等到对象被使用的时候，才会去初始化它，从而一定程度上节省了内存。众所周知，“懒汉模式”会带来线程安全问题，可以通过<strong>普通加锁</strong>，或者更高效的<strong>双重检验锁</strong>来优化。对于“懒汉模式”，Go语言有一个更优雅的实现方式，那就是利用<code>sync.Once</code>，它有一个<code>Do</code>方法，其入参是一个方法，Go语言会保证仅仅只调用一次该方法。</p>
+<pre><code class="language-go">// 单例模式的“懒汉模式”实现
+package msgpool
+...
+var once = &amp;sync.Once{}
+// 消息池单例，在首次调用时初始化
+var msgPool *messagePool
+// 全局唯一获取消息池pool到方法
+func Instance() *messagePool {
+    // 在匿名函数中实现初始化逻辑，Go语言保证只会调用一次
+    once.Do(func() {
+        msgPool = &amp;messagePool{
+            // 如果消息池里没有消息，则新建一个Count值为0的Message实例
+            pool: &amp;sync.Pool{New: func() interface{} { return &amp;Message{Count: 0} }},
+        }
+    })
+    return msgPool
+}
+...
+复制代码
+</code></pre>
+<h2 id="建造者模式builder-pattern">建造者模式（Builder Pattern）</h2>
+<figure data-type="image" tabindex="2"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky4kprezj319e0kuu0x.jpg" alt="建造者模式结构" loading="lazy"></figure>
+<h3 id="简述-2">简述</h3>
+<p>在程序设计中，我们会经常遇到一些复杂的对象，其中有很多成员属性，甚至嵌套着多个复杂的对象。这种情况下，创建这个复杂对象就会变得很繁琐。对于C++/Java而言，最常见的表现就是构造函数有着长长的参数列表：</p>
+<pre><code class="language-java">MyObject obj = new MyObject(param1, param2, param3, param4, param5, param6, ...)
+复制代码
+</code></pre>
+<p>而对于Go语言来说，最常见的表现就是多层的嵌套实例化：</p>
+<pre><code class="language-go">obj := &amp;MyObject{
+  Field1: &amp;Field1 {
+    Param1: &amp;Param1 {
+      Val: 0,
+    },
+    Param2: &amp;Param2 {
+      Val: 1,
+    },
+    ...
+  },
+  Field2: &amp;Field2 {
+    Param3: &amp;Param3 {
+      Val: 2,
+    },
+    ...
+  },
+  ...
+}
+复制代码
+</code></pre>
+<p>上述的对象创建方法有两个明显的缺点：（1）<strong>对对象使用者不友好</strong>，使用者在创建对象时需要知道的细节太多；（2）<strong>代码可读性很差</strong>。</p>
+<p><em>针对这种对象成员较多，创建对象逻辑较为繁琐的场景，就适合使用建造者模式来进行优化。</em></p>
+<p>建造者模式的作用有如下几个：</p>
+<p>1、封装复杂对象的创建过程，使对象使用者不感知复杂的创建逻辑。</p>
+<p>2、可以一步步按照顺序对成员进行赋值，或者创建嵌套对象，并最终完成目标对象的创建。</p>
+<p>3、对多个对象复用同样的对象创建逻辑。</p>
+<p>其中，第1和第2点比较常用，下面对建造者模式的实现也主要是针对这两点进行示例。</p>
+<h3 id="go实现-2">Go实现</h3>
+<p>考虑如下的一个<code>Message</code>结构体，其主要有<code>Header</code>和<code>Body</code>组成：</p>
+<pre><code class="language-go">package msg
+...
+type Message struct {
+    Header *Header
+    Body   *Body
+}
+type Header struct {
+    SrcAddr  string
+    SrcPort  uint64
+    DestAddr string
+    DestPort uint64
+    Items    map[string]string
+}
+type Body struct {
+    Items []string
+}
+...
+复制代码
+</code></pre>
+<p>如果按照直接的对象创建方式，创建逻辑应该是这样的：</p>
+<pre><code class="language-go">// 多层的嵌套实例化
+message := msg.Message{
+    Header: &amp;msg.Header{
+        SrcAddr:  &quot;192.168.0.1&quot;,
+        SrcPort:  1234,
+        DestAddr: &quot;192.168.0.2&quot;,
+        DestPort: 8080,
+        Items:    make(map[string]string),
+    },
+    Body:   &amp;msg.Body{
+        Items: make([]string, 0),
+    },
+}
+// 需要知道对象的实现细节
+message.Header.Items[&quot;contents&quot;] = &quot;application/json&quot;
+message.Body.Items = append(message.Body.Items, &quot;record1&quot;)
+message.Body.Items = append(message.Body.Items, &quot;record2&quot;)
+复制代码
+</code></pre>
+<p>虽然<code>Message</code>结构体嵌套的层次不多，但是从其创建的代码来看，确实存在<strong>对对象使用者不友好</strong>和<strong>代码可读性差</strong>的缺点。下面我们引入建造者模式对代码进行重构：</p>
+<pre><code class="language-go">package msg
+...
+// Message对象的Builder对象
+type builder struct {
+    once *sync.Once
+    msg *Message
+}
+// 返回Builder对象
+func Builder() *builder {
+    return &amp;builder{
+        once: &amp;sync.Once{},
+        msg: &amp;Message{Header: &amp;Header{}, Body: &amp;Body{}},
+    }
+}
+// 以下是对Message成员对构建方法
+func (b *builder) WithSrcAddr(srcAddr string) *builder {
+    b.msg.Header.SrcAddr = srcAddr
+    return b
+}
+func (b *builder) WithSrcPort(srcPort uint64) *builder {
+    b.msg.Header.SrcPort = srcPort
+    return b
+}
+func (b *builder) WithDestAddr(destAddr string) *builder {
+    b.msg.Header.DestAddr = destAddr
+    return b
+}
+func (b *builder) WithDestPort(destPort uint64) *builder {
+    b.msg.Header.DestPort = destPort
+    return b
+}
+func (b *builder) WithHeaderItem(key, value string) *builder {
+  // 保证map只初始化一次
+    b.once.Do(func() {
+        b.msg.Header.Items = make(map[string]string)
+    })
+    b.msg.Header.Items[key] = value
+    return b
+}
+func (b *builder) WithBodyItem(record string) *builder {
+    b.msg.Body.Items = append(b.msg.Body.Items, record)
+    return b
+}
+// 创建Message对象，在最后一步调用
+func (b *builder) Build() *Message {
+    return b.msg
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestMessageBuilder(t *testing.T) {
+  // 使用消息建造者进行对象创建
+    message := msg.Builder().
+        WithSrcAddr(&quot;192.168.0.1&quot;).
+        WithSrcPort(1234).
+        WithDestAddr(&quot;192.168.0.2&quot;).
+        WithDestPort(8080).
+        WithHeaderItem(&quot;contents&quot;, &quot;application/json&quot;).
+        WithBodyItem(&quot;record1&quot;).
+        WithBodyItem(&quot;record2&quot;).
+        Build()
+    if message.Header.SrcAddr != &quot;192.168.0.1&quot; {
+        t.Errorf(&quot;expect src address 192.168.0.1, but actual %s.&quot;, message.Header.SrcAddr)
+    }
+    if message.Body.Items[0] != &quot;record1&quot; {
+        t.Errorf(&quot;expect body item0 record1, but actual %s.&quot;, message.Body.Items[0])
+    }
+}
+// 运行结果
+=== RUN   TestMessageBuilder
+--- PASS: TestMessageBuilder (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>从测试代码可知，使用建造者模式来进行对象创建，使用者不再需要知道对象具体的实现细节，代码可读性也更好。</p>
+<h2 id="工厂方法模式factory-method-pattern">工厂方法模式（Factory Method Pattern）</h2>
+<figure data-type="image" tabindex="3"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkpq8hayrj31cm0sskjm.jpg" alt="工厂方法模式结构" loading="lazy"></figure>
+<h3 id="简述-3">简述</h3>
+<p>工厂方法模式跟上一节讨论的建造者模式类似，都是<strong>将对象创建的逻辑封装起来，为使用者提供一个简单易用的对象创建接口</strong>。两者在应用场景上稍有区别，建造者模式更常用于需要传递多个参数来进行实例化的场景。</p>
+<p>使用工厂方法来创建对象主要有两个好处：</p>
+<p>1、<strong>代码可读性更好</strong>。相比于使用C++/Java中的构造函数，或者Go中的<code>{}</code>来创建对象，工厂方法因为可以通过函数名来表达代码含义，从而具备更好的可读性。比如，使用工厂方法<code>productA := CreateProductA()</code>创建一个<code>ProductA</code>对象，比直接使用<code>productA := ProductA{}</code>的可读性要好。</p>
+<p>2、<strong>与使用者代码解耦</strong>。很多情况下，对象的创建往往是一个容易变化的点，通过工厂方法来封装对象的创建过程，可以在创建逻辑变更时，避免<strong>霰弹式修改</strong>。</p>
+<p>工厂方法模式也有两种实现方式：（1）提供一个工厂对象，通过调用工厂对象的工厂方法来创建产品对象；（2）将工厂方法集成到产品对象中（C++/Java中对象的<code>static</code>方法，Go中同一<code>package</code>下的函数）</p>
+<h3 id="go实现-3">Go实现</h3>
+<p>考虑有一个事件对象<code>Event</code>，分别有两种有效的时间类型<code>Start</code>和<code>End</code>：</p>
+<pre><code class="language-go">package event
+...
+type Type uint8
+// 事件类型定义
+const (
+    Start Type = iota
+    End
+)
+// 事件抽象接口
+type Event interface {
+    EventType() Type
+    Content() string
+}
+// 开始事件，实现了Event接口
+type StartEvent struct{
+    content string
+}
+...
+// 结束事件，实现了Event接口
+type EndEvent struct{
+    content string
+}
+...
+复制代码
+</code></pre>
+<p>1、按照第一种实现方式，为<code>Event</code>提供一个工厂对象，具体代码如下：</p>
+<pre><code class="language-go">package event
+...
+// 事件工厂对象
+type Factory struct{}
+// 更具事件类型创建具体事件
+func (e *Factory) Create(etype Type) Event {
+    switch etype {
+    case Start:
+        return &amp;StartEvent{
+            content: &quot;this is start event&quot;,
+        }
+    case End:
+        return &amp;EndEvent{
+            content: &quot;this is end event&quot;,
+        }
+    default:
+        return nil
+    }
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestEventFactory(t *testing.T) {
+    factory := event.Factory{}
+    e := factory.Create(event.Start)
+    if e.EventType() != event.Start {
+        t.Errorf(&quot;expect event.Start, but actual %v.&quot;, e.EventType())
+    }
+    e = factory.Create(event.End)
+    if e.EventType() != event.End {
+        t.Errorf(&quot;expect event.End, but actual %v.&quot;, e.EventType())
+    }
+}
+// 运行结果
+=== RUN   TestEventFactory
+--- PASS: TestEventFactory (0.00s)
+PASS
+复制代码
+</code></pre>
+<p>2、按照第二种实现方式，分别给<code>Start</code>和<code>End</code>类型的<code>Event</code>单独提供一个工厂方法，代码如下：</p>
+<pre><code class="language-go">package event
+...
+// Start类型Event的工厂方法
+func OfStart() Event {
+    return &amp;StartEvent{
+        content: &quot;this is start event&quot;,
+    }
+}
+// End类型Event的工厂方法
+func OfEnd() Event {
+    return &amp;EndEvent{
+        content: &quot;this is end event&quot;,
+    }
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package event
+...
+func TestEvent(t *testing.T) {
+    e := event.OfStart()
+    if e.EventType() != event.Start {
+        t.Errorf(&quot;expect event.Start, but actual %v.&quot;, e.EventType())
+    }
+    e = event.OfEnd()
+    if e.EventType() != event.End {
+        t.Errorf(&quot;expect event.End, but actual %v.&quot;, e.EventType())
+    }
+}
+// 运行结果
+=== RUN   TestEvent
+--- PASS: TestEvent (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="抽象工厂模式abstract-factory-pattern">抽象工厂模式（Abstract Factory Pattern）</h2>
+<figure data-type="image" tabindex="4"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkxo5tf5ij31ak0om4qq.jpg" alt="抽象工厂模式结构" loading="lazy"></figure>
+<h3 id="简述-4">简述</h3>
+<p>在工厂方法模式中，我们通过一个工厂对象来创建一个产品族，具体创建哪个产品，则通过<code>swtich-case</code>的方式去判断。这也意味着该产品组上，每新增一类产品对象，都必须修改原来工厂对象的代码；而且随着产品的不断增多，工厂对象的职责也越来越重，违反了<strong>单一职责原则</strong>。</p>
+<p>抽象工厂模式通过给工厂类新增一个抽象层解决了该问题，如上图所示，<code>FactoryA</code>和<code>FactoryB</code>都实现·抽象工厂接口，分别用于创建<code>ProductA</code>和<code>ProductB</code>。如果后续新增了<code>ProductC</code>，只需新增一个<code>FactoryC</code>即可，无需修改原有的代码；因为每个工厂只负责创建一个产品，因此也遵循了<strong>单一职责原则</strong>。</p>
+<h3 id="go实现-4">Go实现</h3>
+<p>考虑需要如下一个插件架构风格的消息处理系统，<code>pipeline</code>是消息处理的管道，其中包含了<code>input</code>、<code>filter</code>和<code>output</code>三个插件。我们需要实现根据配置来创建<code>pipeline</code> ，加载插件过程的实现非常适合使用工厂模式，其中<code>input</code>、<code>filter</code>和<code>output</code>三类插件的创建使用抽象工厂模式，而<code>pipeline</code>的创建则使用工厂方法模式。</p>
+<figure data-type="image" tabindex="5"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghkw23e4r3j31bs0nge82.jpg" alt="抽象工厂模式示例" loading="lazy"></figure>
+<p>各类插件和<code>pipeline</code>的接口定义如下：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件抽象接口定义
+type Plugin interface {}
+// 输入插件，用于接收消息
+type Input interface {
+    Plugin
+    Receive() string
+}
+// 过滤插件，用于处理消息
+type Filter interface {
+    Plugin
+    Process(msg string) string
+}
+// 输出插件，用于发送消息
+type Output interface {
+    Plugin
+    Send(msg string)
+}
+复制代码
+package pipeline
+...
+// 消息管道的定义
+type Pipeline struct {
+    input  plugin.Input
+    filter plugin.Filter
+    output plugin.Output
+}
+// 一个消息的处理流程为 input -&gt; filter -&gt; output
+func (p *Pipeline) Exec() {
+    msg := p.input.Receive()
+    msg = p.filter.Process(msg)
+    p.output.Send(msg)
+}
+复制代码
+</code></pre>
+<p>接着，我们定义<code>input</code>、<code>filter</code>、<code>output</code>三类插件接口的具体实现：</p>
+<pre><code class="language-go">package plugin
+...
+// input插件名称与类型的映射关系，主要用于通过反射创建input对象
+var inputNames = make(map[string]reflect.Type)
+// Hello input插件，接收“Hello World”消息
+type HelloInput struct {}
+
+func (h *HelloInput) Receive() string {
+    return &quot;Hello World&quot;
+}
+// 初始化input插件映射关系表
+func init() {
+    inputNames[&quot;hello&quot;] = reflect.TypeOf(HelloInput{})
+}
+复制代码
+package plugin
+...
+// filter插件名称与类型的映射关系，主要用于通过反射创建filter对象
+var filterNames = make(map[string]reflect.Type)
+// Upper filter插件，将消息全部字母转成大写
+type UpperFilter struct {}
+
+func (u *UpperFilter) Process(msg string) string {
+    return strings.ToUpper(msg)
+}
+// 初始化filter插件映射关系表
+func init() {
+    filterNames[&quot;upper&quot;] = reflect.TypeOf(UpperFilter{})
+}
+复制代码
+package plugin
+...
+// output插件名称与类型的映射关系，主要用于通过反射创建output对象
+var outputNames = make(map[string]reflect.Type)
+// Console output插件，将消息输出到控制台上
+type ConsoleOutput struct {}
+
+func (c *ConsoleOutput) Send(msg string) {
+    fmt.Println(msg)
+}
+// 初始化output插件映射关系表
+func init() {
+    outputNames[&quot;console&quot;] = reflect.TypeOf(ConsoleOutput{})
+}
+复制代码
+</code></pre>
+<p>然后，我们定义插件抽象工厂接口，以及对应插件的工厂实现：</p>
+<pre><code class="language-go">package plugin
+...
+// 插件抽象工厂接口
+type Factory interface {
+    Create(conf Config) Plugin
+}
+// input插件工厂对象，实现Factory接口
+type InputFactory struct{}
+// 读取配置，通过反射机制进行对象实例化
+func (i *InputFactory) Create(conf Config) Plugin {
+    t, _ := inputNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+// filter和output插件工厂实现类似
+type FilterFactory struct{}
+func (f *FilterFactory) Create(conf Config) Plugin {
+    t, _ := filterNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+type OutputFactory struct{}
+func (o *OutputFactory) Create(conf Config) Plugin {
+    t, _ := outputNames[conf.Name]
+    return reflect.New(t).Interface().(Plugin)
+}
+复制代码
+</code></pre>
+<p>最后定义<code>pipeline</code>的工厂方法，调用<code>plugin.Factory</code>抽象工厂完成pipelien对象的实例化：</p>
+<pre><code class="language-go">package pipeline
+...
+// 保存用于创建Plugin的工厂实例，其中map的key为插件类型，value为抽象工厂接口
+var pluginFactories = make(map[plugin.Type]plugin.Factory)
+// 根据plugin.Type返回对应Plugin类型的工厂实例
+func factoryOf(t plugin.Type) plugin.Factory {
+    factory, _ := pluginFactories[t]
+    return factory
+}
+// pipeline工厂方法，根据配置创建一个Pipeline实例
+func Of(conf Config) *Pipeline {
+    p := &amp;Pipeline{}
+    p.input = factoryOf(plugin.InputType).Create(conf.Input).(plugin.Input)
+    p.filter = factoryOf(plugin.FilterType).Create(conf.Filter).(plugin.Filter)
+    p.output = factoryOf(plugin.OutputType).Create(conf.Output).(plugin.Output)
+    return p
+}
+// 初始化插件工厂对象
+func init() {
+    pluginFactories[plugin.InputType] = &amp;plugin.InputFactory{}
+    pluginFactories[plugin.FilterType] = &amp;plugin.FilterFactory{}
+    pluginFactories[plugin.OutputType] = &amp;plugin.OutputFactory{}
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPipeline(t *testing.T) {
+  // 其中pipeline.DefaultConfig()的配置内容见【抽象工厂模式示例图】
+  // 消息处理流程为 HelloInput -&gt; UpperFilter -&gt; ConsoleOutput
+    p := pipeline.Of(pipeline.DefaultConfig())
+    p.Exec()
+}
+// 运行结果
+=== RUN   TestPipeline
+HELLO WORLD
+--- PASS: TestPipeline (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="原型模式prototype-pattern">原型模式（Prototype Pattern）</h2>
+<figure data-type="image" tabindex="6"><img src="https://tva1.sinaimg.cn/large/007S8ZIlgy1ghky39ichjj319u0gqhdt.jpg" alt="原型模式结构" loading="lazy"></figure>
+<h3 id="简述-5">简述</h3>
+<p>原型模式主要解决对象复制的问题，它的核心就是<code>clone()</code>方法，返回<code>Prototype</code>对象的复制品。在程序设计过程中，往往会遇到有一些场景需要大量相同的对象，如果不使用原型模式，那么我们可能会这样进行对象的创建：<em>新创建一个相同对象的实例，然后遍历原始对象的所有成员变量， 并将成员变量值复制到新对象中</em>。这种方法的缺点很明显，那就是使用者必须知道对象的实现细节，导致代码之间的耦合。另外，对象很有可能存在除了对象本身以外不可见的变量，这种情况下该方法就行不通了。</p>
+<p>对于这种情况，更好的方法就是使用原型模式，将复制逻辑委托给对象本身，这样，上述两个问题也都迎刃而解了。</p>
+<h3 id="go实现-5">Go实现</h3>
+<p>还是以建造者模式一节中的<code>Message</code>作为例子，现在设计一个<code>Prototype</code>抽象接口：</p>
+<pre><code class="language-go">package prototype
+...
+// 原型复制抽象接口
+type Prototype interface {
+    clone() Prototype
+}
+
+type Message struct {
+    Header *Header
+    Body   *Body
+}
+
+func (m *Message) clone() Prototype {
+    msg := *m
+    return &amp;msg
+}
+复制代码
+</code></pre>
+<p>测试代码如下：</p>
+<pre><code class="language-go">package test
+...
+func TestPrototype(t *testing.T) {
+    message := msg.Builder().
+        WithSrcAddr(&quot;192.168.0.1&quot;).
+        WithSrcPort(1234).
+        WithDestAddr(&quot;192.168.0.2&quot;).
+        WithDestPort(8080).
+        WithHeaderItem(&quot;contents&quot;, &quot;application/json&quot;).
+        WithBodyItem(&quot;record1&quot;).
+        WithBodyItem(&quot;record2&quot;).
+        Build()
+  // 复制一份消息
+    newMessage := message.Clone().(*msg.Message)
+    if newMessage.Header.SrcAddr != message.Header.SrcAddr {
+        t.Errorf(&quot;Clone Message failed.&quot;)
+    }
+    if newMessage.Body.Items[0] != message.Body.Items[0] {
+        t.Errorf(&quot;Clone Message failed.&quot;)
+    }
+}
+// 运行结果
+=== RUN   TestPrototype
+--- PASS: TestPrototype (0.00s)
+PASS
+复制代码
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>本文主要介绍了GoF的23种设计模式中的5种创建型模式，创建型模式的目的都是<strong>提供一个简单的接口，让对象的创建过程与使用者解耦</strong>。其中，<strong>单例模式</strong>主要用于保证一个类仅有一个实例，并提供一个访问它的全局访问点；<strong>建造者模式</strong>主要解决需要创建对象时需要传入多个参数，或者对初始化顺序有要求的场景；<strong>工厂方法模式</strong>通过提供一个工厂对象或者工厂方法，为使用者隐藏了对象创建的细节；<strong>抽象工厂模式</strong>是对工厂方法模式的优化，通过为工厂对象新增一个抽象层，让工厂对象遵循单一职责原则，也避免了霰弹式修改；<strong>原型模式</strong>则让对象复制更加简单。</p>
+<p>下一篇文章，将介绍23种设计模式中的7种<strong>结构型模式</strong>（Structural Pattern），及其Go语言的实现。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[用 golang 实现的十大经典排序]]></title>
         <id>https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/</id>
@@ -1196,114 +2234,6 @@ part2 size: 16, align: 8
 <li><a href="https://en.wikipedia.org/wiki/Data_structure_alignment">Data structure alignment</a></li>
 <li><a href="https://www.ibm.com/developerworks/library/pa-dalign/">Data alignment</a></li>
 </ul>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Golang 中零值的坑]]></title>
-        <id>https://ChicRingo.github.io/post/golang-zhong-ling-zhi-de-keng/</id>
-        <link href="https://ChicRingo.github.io/post/golang-zhong-ling-zhi-de-keng/">
-        </link>
-        <updated>2020-08-19T11:13:43.000Z</updated>
-        <summary type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
-<!-- more -->
-<h2 id="默认值">默认值</h2>
-<p>可以通过 tag 定义字段的默认值，比如：</p>
-<pre><code class="language-go">type User struct {
-  ID   int64
-  Name string `gorm:&quot;default:'小王子'&quot;`
-  Age  int64
-}
-</code></pre>
-<p><strong>注意：</strong> 通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。</p>
-<p>举个例子：</p>
-<pre><code class="language-go">var user = User{Name: &quot;&quot;, Age: 99}
-db.Create(&amp;user)
-</code></pre>
-<p>上面代码实际执行的SQL语句是<code>INSERT INTO users(&quot;age&quot;) values('99');</code>，排除了零值字段<code>Name</code>，而在数据库中这一条数据会使用设置的默认值<code>小王子</code>作为Name字段的值。</p>
-<p>**注意：**所有字段的零值, 比如<code>0</code>, <code>&quot;&quot;</code>,<code>false</code>或者其它<code>零值</code>，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 <code>Scanner/Valuer</code>接口，比如：</p>
-<h3 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h3>
-<pre><code class="language-go">// 使用指针
-type User struct {
-  ID   int64
-  Name *string `gorm:&quot;default:'小王子'&quot;`
-  Age  int64
-}
-user := User{Name: new(string), Age: 18))}
-db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
-</code></pre>
-<h3 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h3>
-<pre><code class="language-go">// 使用 Scanner/Valuer
-type User struct {
-	ID int64
-	Name sql.NullString `gorm:&quot;default:'小王子'&quot;` // sql.NullString 实现了Scanner/Valuer接口
-	Age  int64
-}
-user := User{Name: sql.NullString{&quot;&quot;, true}, Age:18}
-db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
-</code></pre>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Golang 中 range 的坑]]></title>
-        <id>https://ChicRingo.github.io/post/golang-zhong-range-de-keng/</id>
-        <link href="https://ChicRingo.github.io/post/golang-zhong-range-de-keng/">
-        </link>
-        <updated>2020-08-19T04:25:55.000Z</updated>
-        <summary type="html"><![CDATA[<p>避免踩坑指北，Golang 中容易在 for range 中踩到的坑</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>避免踩坑指北，Golang 中容易在 for range 中踩到的坑</p>
-<!-- more -->
-<h2 id="使用-range-迭代遍历数组">使用 range 迭代遍历数组</h2>
-<p>range 会复制对象，而不是不是直接在原对象上操作。</p>
-<p>示例一：</p>
-<pre><code class="language-go">func main() {
-    a := [3]int{1, 2, 3}
-    for _, v := range a { // 复制一份a遍历[1, 2, 3]
-        v += 100 // v是复制对象中的值，不会改变a数组元素的值
-    }
-    fmt.Println(a) // 1 2 3
-}
-</code></pre>
-<p>示例二：</p>
-<pre><code class="language-go">func main() {
-    a := [3]int{1, 2, 3}
-    for i, v := range a { // i,v从a复制的对象里提取出
-        if i == 0 {
-            a[1], a[2] = 200, 300
-            fmt.Println(a) // 输出[1 200 300]
-        }
-        a[i] = v + 100 // v是复制对象里的元素[1, 2, 3]
-    }
-    fmt.Println(a) // 输出[101, 102, 103]
-}
-</code></pre>
-<p>结果：</p>
-<pre><code class="language-powershell">[1 200 300]
-[101 102 103]
-</code></pre>
-<h2 id="使用-range-迭代遍历切片">使用 range 迭代遍历切片</h2>
-<p>range迭代遍历引用类型时，底层的数据不会被复制：</p>
-<pre><code class="language-go">func main() {
-    a := []int{1, 2, 3} // 改成slice
-    for i, v := range a {
-        if i == 0 {
-            a[1], a[2] = 200, 300
-            fmt.Println(a) // [1 200 300]
-        }
-        a[i] = v + 100
-    }
-    fmt.Println(a) // 输出[101 300 400]
-}
-
-</code></pre>
-<p>结果：</p>
-<pre><code class="language-powershell">[1 200 300]
-[101 300 400]
-</code></pre>
-<p>因为切片的内部结构为struct slice{*point, len, cap}。</p>
-<p>数据部分是一个指针，指向地址，复制对象的时候只是把指针的值复制了，而不是重新拷贝一块新的内存再把值放进去，所以修改的时候还是修改的原来的值。</p>
 ]]></content>
     </entry>
 </feed>
