@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1598628247748">
+<link rel="shortcut icon" href="/favicon.ico?v=1598835781118">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -190,7 +190,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">14</span>
+        <span class="site-item-stat-count">15</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -259,6 +259,8 @@
           <small class="language" data-lan="tag">标签</small>
         </h2>
       </div>
+      
+      
       
       
       
@@ -1102,6 +1104,55 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/li-yong-go-fan-she-ji-zhi-shi-xian-pan-duan-slice-zhong-shi-fou-cun-zai-mou-ge-item/"" data-c="
+          &lt;h2 id=&#34;为什么需要&#34;&gt;为什么需要？&lt;/h2&gt;
+&lt;p&gt;日常开发过程中经常遇到需要判断某个 slice(或者 array)中是否包含某个 item 的情况，比如判断 10 是否在[]int{1,2,3}中&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;h2 id=&#34;怎么做&#34;&gt;怎么做？&lt;/h2&gt;
+&lt;p&gt;一般最容易想到的方法是遍历 slice 中的每个元素，直到找到了该元素，否则返回 false，如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+func IsInSlice(value int, sli []int) bool {
+    for _, v := range sli {
+     if value == v {
+      return true
+     }
+    }
+    return false
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;这种方法实现略显笨拙，并且针对不同的数据类型无法通用，如果有不同的数据类型，则容易生成很多相同功能的函数，只是参数不同，这样的话代码可用性并不高。&lt;/p&gt;
+&lt;h2 id=&#34;如何改进&#34;&gt;如何改进&lt;/h2&gt;
+&lt;p&gt;golang 中可以通过 reflect 包中的 TypeOf(), ValueOf()和 DeepEqual()接口对方法进行改进，方法参数使用 interface{}类型，代码实现如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&#34;language-go&#34;&gt;package main
+
+import &amp;quot;reflect&amp;quot;
+
+func IsInSlice(value interface{}, sli interface{}) bool {
+    switch reflect.TypeOf(sli).Kind() {
+    case reflect.Slice, reflect.Array:
+     s := reflect.ValueOf(sli)
+     for i := 0; i &amp;lt; s.Len(); i++ {
+      if reflect.DeepEqual(value, s.Index(i).Interface()) {
+       return true
+      }
+     }
+    }
+    return false
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;瞬间不用再为不同数据类型需要写不同函数而心烦了！&lt;/p&gt;
+&lt;h2 id=&#34;提示&#34;&gt;提示&lt;/h2&gt;
+&lt;p&gt;因为反射需要的时间开销比较大，所以通用写法的效率肯定比特定类型的写法低，所以需要根据实际情况来权衡使用，如下截图为 int 类型的基准测试：&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://pyihe.github.io/assets/img/2020-05-29/%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95.jpg&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;blockquote&gt;
+&lt;p&gt;原文作者：pyihe&lt;/p&gt;
+&lt;p&gt;原文链接：https://pyihe.github.io/2020/05/29/Golang%E5%88%A4%E6%96%ADslice%E4%B8%AD%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8%E6%9F%90%E4%B8%AAitem.html&lt;/p&gt;
+&lt;/blockquote&gt;
+">利用Go反射机制实现判断slice中是否存在某个item</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/"" data-c="

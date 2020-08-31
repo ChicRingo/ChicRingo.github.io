@@ -8,7 +8,7 @@
 <meta name="keywords" content="ChicRingo个人博客">
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
-<title>用 golang 实现的十大经典排序 | ChicRingo个人博客</title>
+<title>利用Go反射机制实现判断slice中是否存在某个item | ChicRingo个人博客</title>
 <link rel="shortcut icon" href="/favicon.ico?v=1598835781118">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
@@ -38,7 +38,7 @@
 
 
 
-  <meta name="description" content="用 golang 实现的十大经典排序" />
+  <meta name="description" content="利用Go反射机制实现判断slice中是否存在某个item" />
   <meta name="keywords" content="" />
 </head>
 
@@ -259,17 +259,10 @@
     <ul class="markdownIt-TOC">
 <li>
 <ul>
-<li>
-<ul>
-<li><a href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F">冒泡排序</a></li>
-<li><a href="#%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F">选择排序</a></li>
-<li><a href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F">插入排序</a></li>
-<li><a href="#%E5%B8%8C%E5%B0%94%E6%8E%92%E5%BA%8F">希尔排序</a></li>
-<li><a href="#%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F">归并排序</a></li>
-<li><a href="#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F">快速排序</a></li>
-<li><a href="#%E5%A0%86%E6%8E%92%E5%BA%8F">堆排序</a></li>
-</ul>
-</li>
+<li><a href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81">为什么需要？</a></li>
+<li><a href="#%E6%80%8E%E4%B9%88%E5%81%9A">怎么做？</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E6%94%B9%E8%BF%9B">如何改进</a></li>
+<li><a href="#%E6%8F%90%E7%A4%BA">提示</a></li>
 </ul>
 </li>
 </ul>
@@ -537,8 +530,8 @@
           <div class="section bg-color post post-page">
             <section class="post-header">
   <h1 class="post-title">
-    <a class="post-title-link" href="https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/">
-      用 golang 实现的十大经典排序
+    <a class="post-title-link" href="https://ChicRingo.github.io/post/li-yong-go-fan-she-ji-zhi-shi-xian-pan-duan-slice-zhong-shi-fou-cun-zai-mou-ge-item/">
+      利用Go反射机制实现判断slice中是否存在某个item
     </a>
   </h1>
   <div class="post-meta">
@@ -546,134 +539,67 @@
     <span class="meta-item pc-show">
       <i class="fa fa-calendar-o"></i>
       <span class="language" data-lan="publish">发布于</span>
-      <span class="publish-time" data-t="2020-08-28 13:06:03">2020-08-28</span>
+      <span class="publish-time" data-t="2020-08-31 09:00:43">2020-08-31</span>
       <span class="post-meta-divider pc-show">|</span>
     </span>
     
     <span class="meta-item">
       <i class="fa fa-clock-o"></i>
-      <span>3<span class="language" data-lan="minute">分钟</span></span>
+      <span>2<span class="language" data-lan="minute">分钟</span></span>
     </span>
     <span class="meta-item">
       <span class="post-meta-divider">|</span>
       <i class="fa fa-file-word-o"></i>
-      <span>629<span class="pc-show language" data-lan="words">字数</span></span>
+      <span>397<span class="pc-show language" data-lan="words">字数</span></span>
     </span>
     
   </div>
 </section>
             <div class="post-body next-md-body" id="post_body">
-              <p>用go语言实现的十大经典排序</p>
+              <h2 id="为什么需要">为什么需要？</h2>
+<p>日常开发过程中经常遇到需要判断某个 slice(或者 array)中是否包含某个 item 的情况，比如判断 10 是否在[]int{1,2,3}中</p>
 <!-- more -->
-<h3 id="冒泡排序">冒泡排序</h3>
-<pre><code class="language-go">// 冒泡排序
-func bubble(nums []int) []int {
-   numLen := len(nums)
+<h2 id="怎么做">怎么做？</h2>
+<p>一般最容易想到的方法是遍历 slice 中的每个元素，直到找到了该元素，否则返回 false，如下：</p>
+<pre><code class="language-go">package main
 
-   for i := 0; i &lt; numLen; i++ {
-      // 按相邻两个一起比较，所以最后一个不用遍历 -1,已经排序的也不用重新排序，所以-i，不写也可
-      for j := 0; j &lt; numLen-1-i; j++ {
-         // 当前值大于后一个值，则对换位置
-         if nums[j] &gt; nums[j+1] {
-            nums[j], nums[j+1] = nums[j+1], nums[j]
-         }
-      }
-   }
-
-   return nums
+func IsInSlice(value int, sli []int) bool {
+    for _, v := range sli {
+     if value == v {
+      return true
+     }
+    }
+    return false
 }
 </code></pre>
-<h3 id="选择排序">选择排序</h3>
-<pre><code class="language-go">func selection(nums []int) []int {
-   numLen := len(nums)
-   //最后一个不用排序了
-   for i := 0; i &lt; numLen-1; i++ {
-      //每次最小值的位置index
-      var minIndex = i
-      // 从第二个开始排序，也就是i+1
-      for j := i + 1; j &lt; numLen; j++ {
-         if nums[j] &lt; nums[minIndex] {
-            minIndex = j
-         }
-      }
-      nums[i], nums[minIndex] = nums[minIndex], nums[i]
-   }
+<p>这种方法实现略显笨拙，并且针对不同的数据类型无法通用，如果有不同的数据类型，则容易生成很多相同功能的函数，只是参数不同，这样的话代码可用性并不高。</p>
+<h2 id="如何改进">如何改进</h2>
+<p>golang 中可以通过 reflect 包中的 TypeOf(), ValueOf()和 DeepEqual()接口对方法进行改进，方法参数使用 interface{}类型，代码实现如下：</p>
+<pre><code class="language-go">package main
 
-   return nums
+import &quot;reflect&quot;
+
+func IsInSlice(value interface{}, sli interface{}) bool {
+    switch reflect.TypeOf(sli).Kind() {
+    case reflect.Slice, reflect.Array:
+     s := reflect.ValueOf(sli)
+     for i := 0; i &lt; s.Len(); i++ {
+      if reflect.DeepEqual(value, s.Index(i).Interface()) {
+       return true
+      }
+     }
+    }
+    return false
 }
 </code></pre>
-<h3 id="插入排序">插入排序</h3>
-<pre><code class="language-go">func insertion(nums []int) []int {
-   // 网上写法
-   for i, tmp := range nums {
-      // 前一个索引值
-      preIndex := i - 1
-      // 定义一个临时变量取当前的值（挖出来腾地方，给前面的往后挪位置的空间
-      //tmp := nums[i]
-      // 如果当前值 tmp 小于前面的值，就把前面的值往后挪，因为tmp已经保存过相当于空的
-      for preIndex &gt;= 0 &amp;&amp; tmp &lt; nums[preIndex] {
-         nums[preIndex+1] = nums[preIndex]
-         preIndex--
-      }
-      // 不满足以上条件时，说明没有比tmp更小的，就保存tmp当前值到新的位置
-      nums[preIndex+1] = tmp
-   }
-
-   // 自己写法
-   //numLen := len(nums)
-   //for i := 1; i &lt; numLen; i++ { //从第2个开始，i=1开始
-   //
-   // temp := nums[i] // 定义一个临时变量取当前的值
-   // // 把该值tmp与之前的数 从后往前进行比较
-   // for j := i - 1; j &gt;= 0; j-- {
-   //    // 当 当前值tmp 比之前的某个值大,那么插入,否则把每个值往后移一位
-   //    if temp &gt; nums[j] {
-   //       nums[j+1] = temp
-   //       break
-   //    } else {
-   //       nums[j+1] = nums[j]
-   //    }
-   //    // 如果都移动了,然后遍历到0了,说明当前值是最小的,把当前值放到最小的位置
-   //    if j == 0 {
-   //       nums[0] = temp
-   //    }
-   // }
-   //}
-   return nums
-}
-</code></pre>
-<h3 id="希尔排序">希尔排序</h3>
-<h3 id="归并排序">归并排序</h3>
-<h3 id="快速排序">快速排序</h3>
-<pre><code class="language-go">func partition(nums []int, left, right int) int {
-   // 设基准值 privot 为left
-   privot := left
-   index := privot + 1
-   for i := index; i &lt;= right; i++ {
-      if nums[i] &lt; nums[privot] {
-         nums[i], nums[index] = nums[index], nums[i]
-         index++
-      }
-   }
-   nums[privot], nums[index-1] = nums[index-1], nums[privot]
-   return index - 1
-}
-
-func quickSort(nums []int, left, right int) {
-   // 如果数组长度小于等于1，说明这个数组分区不需要再排序了，直接return
-   if len(nums) &lt;= 1 {
-      return
-   }
-   // 如果左小于右，
-   if left &lt; right {
-      partIndex := partition(nums, left, right)
-      quickSort(nums, left, partIndex-1)
-      quickSort(nums, partIndex+1, right)
-   }
-   return
-}
-</code></pre>
-<h3 id="堆排序">堆排序</h3>
+<p>瞬间不用再为不同数据类型需要写不同函数而心烦了！</p>
+<h2 id="提示">提示</h2>
+<p>因为反射需要的时间开销比较大，所以通用写法的效率肯定比特定类型的写法低，所以需要根据实际情况来权衡使用，如下截图为 int 类型的基准测试：</p>
+<figure data-type="image" tabindex="1"><img src="https://pyihe.github.io/assets/img/2020-05-29/%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95.jpg" alt="img" loading="lazy"></figure>
+<blockquote>
+<p>原文作者：pyihe</p>
+<p>原文链接：https://pyihe.github.io/2020/05/29/Golang%E5%88%A4%E6%96%ADslice%E4%B8%AD%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8%E6%9F%90%E4%B8%AAitem.html</p>
+</blockquote>
 
             </div>
             
@@ -686,7 +612,7 @@ func quickSort(nums []int, left, right int) {
     </li>
     <li class="post-copyright-link">
       <strong class="language" data-lan="link">本文链接：</strong>
-      <a href="https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/" title="用 golang 实现的十大经典排序">https://ChicRingo.github.io/post/yong-golang-shi-xian-de-shi-da-jing-dian-pai-xu/</a>
+      <a href="https://ChicRingo.github.io/post/li-yong-go-fan-she-ji-zhi-shi-xian-pan-duan-slice-zhong-shi-fou-cun-zai-mou-ge-item/" title="利用Go反射机制实现判断slice中是否存在某个item">https://ChicRingo.github.io/post/li-yong-go-fan-she-ji-zhi-shi-xian-pan-duan-slice-zhong-shi-fou-cun-zai-mou-ge-item/</a>
     </li>
     <li class="post-copyright-license">
       <strong class="language" data-lan="copyright">版权声明： </strong>
@@ -699,15 +625,11 @@ func quickSort(nums []int, left, right int) {
   <div class="nav">
     <div class="nav-prev">
       
-        <i class="fa fa-chevron-left"></i>
-        <a class="nav-pc-next" title="使用Go实现GoF的23种设计模式（一）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">使用Go实现GoF的23种设计模式（一）</a class="nav-pc-next">
-        <a class="nav-mobile-prev" title="使用Go实现GoF的23种设计模式（一）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-yi/">上一篇</a>
-      
     </div>
     <div class="nav-next">
       
-        <a class="nav-pc-next" title="我擦~字符串转字节切片后，切片的容量竟然千奇百怪" href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/">我擦~字符串转字节切片后，切片的容量竟然千奇百怪</a>
-        <a class="nav-mobile-next" title="我擦~字符串转字节切片后，切片的容量竟然千奇百怪" href="https://ChicRingo.github.io/post/wo-ca-~zi-fu-chuan-zhuan-zi-jie-qie-pian-hou-qie-pian-de-rong-liang-jing-ran-qian-qi-bai-guai/">下一篇</a>
+        <a class="nav-pc-next" title="使用Go实现GoF的23种设计模式（二）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">使用Go实现GoF的23种设计模式（二）</a>
+        <a class="nav-mobile-next" title="使用Go实现GoF的23种设计模式（二）" href="https://ChicRingo.github.io/post/shi-yong-go-shi-xian-gof-de-23-chong-she-ji-mo-shi-er/">下一篇</a>
         <i class="fa fa-chevron-right"></i>
       
     </div>
