@@ -9,7 +9,7 @@
 <meta name="description" content="温故而知新">
 <meta name="theme-color" content="#000">
 <title>ChicRingo个人博客</title>
-<link rel="shortcut icon" href="/favicon.ico?v=1598835781118">
+<link rel="shortcut icon" href="/favicon.ico?v=1599099782469">
 <link rel="stylesheet" href="/media/css/gemini.css">
 <link rel="stylesheet" href="/media/fonts/font-awesome.css">
 <link
@@ -190,7 +190,7 @@
     <div class="sidebar-item-box">
       <a href="/archives/">
         
-        <span class="site-item-stat-count">15</span>
+        <span class="site-item-stat-count">16</span>
         <span class="site-item-stat-name language" data-lan="article">文章</span>
       </a>
     </div>
@@ -259,6 +259,8 @@
           <small class="language" data-lan="tag">标签</small>
         </h2>
       </div>
+      
+      
       
       
       
@@ -1148,6 +1150,127 @@
       <hr>
     </div>
     <div class="result" id="result">
+      
+      <div class="item">
+        <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/go-mei-ri-yi-ku-zhi-jobrunner/"" data-c="
+          &lt;h2 id=&#34;简介&#34;&gt;简介&lt;/h2&gt;
+&lt;p&gt;我们在 Web 开发中时常会遇到这样的需求，执行一个操作之后，需要给用户一定形式的通知。例如，用户下单之后通过邮件发送电子发票，网上购票支付后通过短信发送车次信息。但是这类需求并不需要非常及时，如果放在请求流程中处理，会影响请求的响应时间。这类任务我们一般使用异步的方式来执行。&lt;a href=&#34;https://github.com/bamzi/jobrunner&#34;&gt;&lt;code&gt;jobrunner&lt;/code&gt;&lt;/a&gt;就是其中一个用来执行异步任务的 Go 语言库。得益于强大的&lt;a href=&#34;https://github.com/robfig/cron&#34;&gt;&lt;code&gt;cron&lt;/code&gt;&lt;/a&gt;库，再搭配&lt;code&gt;jobrunner&lt;/code&gt;的任务状态监控，&lt;code&gt;jobrunner&lt;/code&gt;非常易于使用。&lt;/p&gt;
+&lt;!-- more --&gt;
+&lt;h2 id=&#34;快速使用&#34;&gt;快速使用&lt;/h2&gt;
+&lt;p&gt;本文使用 Go Modules。&lt;/p&gt;
+&lt;p&gt;创建目录并初始化：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1 2&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;$ mkdir jobrunner &amp;amp;&amp;amp; cd jobrunner $ go mod init github.com/darjun/go-daily-lib/jobrunner&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;安装&lt;code&gt;jobrunner&lt;/code&gt;：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;$ go get -u github.com/bamzi/jobrunner&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;使用：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;package main import ( &amp;quot;fmt&amp;quot; &amp;quot;time&amp;quot; &amp;quot;github.com/bamzi/jobrunner&amp;quot; ) type GreetingJob struct { Name string } func (g GreetingJob) Run() { fmt.Println(&amp;quot;Hello, &amp;quot;, g.Name) } func main() { jobrunner.Start() jobrunner.Schedule(&amp;quot;@every 5s&amp;quot;, GreetingJob{Name: &amp;quot;dj&amp;quot;}) time.Sleep(10 * time.Second) }&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;我们创建一个任务，每隔 5s 打印一条欢迎信息。任务的创建和执行与&lt;code&gt;cron&lt;/code&gt;完全相同，详细使用见我前面的&lt;a href=&#34;https://darjun.github.io/2020/06/25/godailylib/cron/&#34;&gt;一篇博文&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;注意，&lt;code&gt;jobrunner&lt;/code&gt;需要先&lt;code&gt;Start()&lt;/code&gt;，然后再添加任务。因为在&lt;code&gt;Start()&lt;/code&gt;中创建&lt;code&gt;MainCron&lt;/code&gt;对象，先添加任务会&lt;code&gt;panic&lt;/code&gt;！！！&lt;/p&gt;
+&lt;p&gt;注意&lt;code&gt;main&lt;/code&gt;函数尾的&lt;code&gt;time.Sleep(10 * time.Second)&lt;/code&gt;，因为主 goroutine 结束之后整个程序就退出了，&lt;code&gt;jobrunner&lt;/code&gt;中的任务就没有机会被执行了。加上&lt;code&gt;time.Sleep&lt;/code&gt;是为了让大家能看到输出，实际使用中不会这样做。&lt;/p&gt;
+&lt;h2 id=&#34;与-web-框架整合&#34;&gt;与 web 框架整合&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;jobrunner&lt;/code&gt;能很方便地与当前常见的 Web 框架整合，如&lt;code&gt;Gin/Echo/Martini/Beego/Revel&lt;/code&gt;等。下面通过一个简单的例子演示如何在 Gin 中使用&lt;code&gt;jobrunner&lt;/code&gt;：用户登录时给他的邮箱发送一封邮件。&lt;/p&gt;
+&lt;p&gt;首先需要安装相应的库：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1 2&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;$ go get -u github.com/gin-gonic/gin $ github.com/jordan-wright/email&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;编写代码：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;package main import ( &amp;quot;fmt&amp;quot; &amp;quot;net/smtp&amp;quot; &amp;quot;time&amp;quot; &amp;quot;github.com/bamzi/jobrunner&amp;quot; &amp;quot;github.com/gin-gonic/gin&amp;quot; &amp;quot;github.com/jordan-wright/email&amp;quot; ) type EmailJob struct { Name string Email string } type User struct { Name string&lt;/code&gt;form:&amp;quot;name&amp;quot;&lt;code&gt;Email string&lt;/code&gt;form:&amp;quot;email&amp;quot;&lt;code&gt;} func (j EmailJob) Run() { e := email.NewEmail() e.From = &amp;quot;leedarjun@126.com&amp;quot; e.To = []string{j.Email} e.Cc = []string{&amp;quot;leedarjun@126.com&amp;quot;} e.Subject = &amp;quot;Welcome To Awesome-Web&amp;quot; e.Text = []byte(fmt.Sprintf(&lt;/code&gt;  Hello, %s  Welcome Back  &lt;code&gt;, j.Name)) err := e.Send(&amp;quot;smtp.126.com:25&amp;quot;, smtp.PlainAuth(&amp;quot;&amp;quot;, &amp;quot;leedarjun@126.com&amp;quot;, &amp;quot;yyyyyy&amp;quot;, &amp;quot;smtp.126.com&amp;quot;)) if err != nil { fmt.Printf(&amp;quot;failed to send email to %s, err:%v&amp;quot;, j.Name, err) } } func login(c *gin.Context) { var u User if c.ShouldBind(&amp;amp;u) == nil { c.String(200, &amp;quot;login success&amp;quot;) jobrunner.In(5*time.Second, EmailJob{Name: u.Name, Email: u.Email}) } else { c.String(404, &amp;quot;login failed&amp;quot;) } } func main() { r := gin.Default() r.GET(&amp;quot;/login&amp;quot;, login) r.Run(&amp;quot;:8888&amp;quot;) }&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;这里只是为了简单演示，我们编写了一个简陋的&lt;code&gt;login&lt;/code&gt;函数处理登录，传入&lt;code&gt;name&lt;/code&gt;和&lt;code&gt;email&lt;/code&gt;，然后给该&lt;code&gt;email&lt;/code&gt;发送邮件。&lt;code&gt;email&lt;/code&gt;库的详细使用可以查看我之前的&lt;a href=&#34;https://darjun.github.io/2020/02/16/godailylib/email&#34;&gt;博文&lt;/a&gt;了解。&lt;/p&gt;
+&lt;p&gt;只需要在浏览器中输入&lt;code&gt;http://localhost:8888/login?name=dj&amp;amp;email=935653229@qq.com&lt;/code&gt;，我的 QQ 邮箱就能收到邮件：&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;1&#34;&gt;&lt;img src=&#34;https://darjun.github.io/img/in-post/godailylib/jobrunner1.png#center&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;h2 id=&#34;监控&#34;&gt;监控&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;jobrunner&lt;/code&gt;内置了一个监控模块，可以很方便地通过网页或者 API 获取当前的任务状态数据：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;code&gt;1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52&lt;/code&gt;&lt;/th&gt;
+&lt;th&gt;&lt;code&gt;package main import ( &amp;quot;fmt&amp;quot; &amp;quot;html/template&amp;quot; &amp;quot;os&amp;quot; &amp;quot;time&amp;quot; &amp;quot;github.com/bamzi/jobrunner&amp;quot; &amp;quot;github.com/gin-gonic/gin&amp;quot; ) type GreetingJob struct { Name string } func (g GreetingJob) Run() { fmt.Println(&amp;quot;Hello,&amp;quot;, g.Name) } type EmailJob struct { Email string } func (e EmailJob) Run() { fmt.Println(&amp;quot;Send,&amp;quot;, e.Email) } func main() { r := gin.Default() jobrunner.Start() jobrunner.Every(5*time.Second, GreetingJob{Name: &amp;quot;dj&amp;quot;}) jobrunner.Every(10*time.Second, EmailJob{Email: &amp;quot;935653229@qq.com&amp;quot;}) r.GET(&amp;quot;/jobrunner/json&amp;quot;, JobJson) r.GET(&amp;quot;/jobrunner/html&amp;quot;, JobHtml) r.Run(&amp;quot;:8888&amp;quot;) } func JobJson(c *gin.Context) { c.JSON(200, jobrunner.StatusJson()) } func JobHtml(c *gin.Context) { t, err := template.ParseFiles(os.Getenv(&amp;quot;GOPATH&amp;quot;) + &amp;quot;/src/github.com/bamzi/jobrunner/views/Status.html&amp;quot;) if err != nil { c.JSON(400, &amp;quot;error&amp;quot;) } t.Execute(c.Writer, jobrunner.StatusPage()) }&lt;/code&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;运行之后，在浏览器中输入&lt;code&gt;http://localhost:8888/jobrunner/html&lt;/code&gt;查看任务状态：&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;2&#34;&gt;&lt;img src=&#34;https://darjun.github.io/img/in-post/godailylib/jobrunner2.png#center&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;p&gt;这里显示任务名、任务 ID、状态、上次运行时间、下次运行时间以及处理延迟。&lt;/p&gt;
+&lt;p&gt;我们还可以通过&lt;code&gt;http://localhost:8888/jobrunner/json&lt;/code&gt;获取原始 JSON 格式的数据自己处理：&lt;/p&gt;
+&lt;figure data-type=&#34;image&#34; tabindex=&#34;3&#34;&gt;&lt;img src=&#34;https://darjun.github.io/img/in-post/godailylib/jobrunner3.png#center&#34; alt=&#34;img&#34; loading=&#34;lazy&#34;&gt;&lt;/figure&gt;
+&lt;h2 id=&#34;总结&#34;&gt;总结&lt;/h2&gt;
+&lt;p&gt;大家如果发现好玩、好用的 Go 语言库，欢迎到 Go 每日一库 GitHub 上提交 issue😄&lt;/p&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;jobrunner GitHub：https://github.com/bamzi/jobrunner&lt;/li&gt;
+&lt;li&gt;Go 每日一库 GitHub：https://github.com/darjun/go-daily-lib&lt;/li&gt;
+&lt;/ol&gt;
+">Go 每日一库之 jobrunner</a>
+      </div>
       
       <div class="item">
         <a class="result-title" style="opacity: 0;" href="https://ChicRingo.github.io/post/li-yong-go-fan-she-ji-zhi-shi-xian-pan-duan-slice-zhong-shi-fou-cun-zai-mou-ge-item/"" data-c="
