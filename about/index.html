@@ -1,10 +1,10 @@
-<html>
+<html lang="zh">
 <head>
     <meta charset="utf-8"/>
 <meta name="description" content=""/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-<title>Golang 中零值的坑 | ChicRingo个人博客</title>
+<title>关于 - ChicRingo个人博客</title>
 
 <link rel="shortcut icon" href="https://ChicRingo.github.io/favicon.ico?v=1602399623887">
 
@@ -25,7 +25,7 @@
 
 
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
 </head>
 <body>
 <div class="main gt-bg-theme-color-first">
@@ -86,84 +86,14 @@
 </nav>
 
     <div class="post-container">
-        <div class="post-detail gt-bg-theme-color-second">
+        <div class="post-detail">
             <article class="gt-post-content">
-                <h2 class="post-title">
-                    Golang 中零值的坑
-                </h2>
-                <div class="post-info">
-                    <time class="post-time gt-c-content-color-first">
-                        · 2020-08-19 ·
-                    </time>
-                    
-                        <a href="https://ChicRingo.github.io/tag/踩坑/" class="post-tags">
-                            # 踩坑
-                        </a>
-                    
-                        <a href="https://ChicRingo.github.io/tag/dtG_jQWhR/" class="post-tags">
-                            # Golang
-                        </a>
-                    
-                </div>
                 <div class="post-content">
-                    <p>对于int, string, bool来说，声明这三种基本类型的变量，Go会默认分配一个零值，零值分别为 0 , '' ,false，所以在GORM中通过tag定义字段的默认值后，这些有默认值的字段在使用这些零值作为参数时，GORM不会把这些字段的值插入数据库中，这个坑一定要切记。</p>
-<!-- more -->
-<h2 id="默认值">默认值</h2>
-<p>可以通过 tag 定义字段的默认值，比如：</p>
-<pre><code class="language-go">type User struct {
-  ID   int64
-  Name string `gorm:&quot;default:'小王子'&quot;`
-  Age  int64
-}
-</code></pre>
-<p><strong>注意：</strong> 通过tag定义字段的默认值，在创建记录时候生成的 SQL 语句会排除没有值或值为 零值 的字段。 在将记录插入到数据库后，Gorm会从数据库加载那些字段的默认值。</p>
-<p>举个例子：</p>
-<pre><code class="language-go">var user = User{Name: &quot;&quot;, Age: 99}
-db.Create(&amp;user)
-</code></pre>
-<p>上面代码实际执行的SQL语句是<code>INSERT INTO users(&quot;age&quot;) values('99');</code>，排除了零值字段<code>Name</code>，而在数据库中这一条数据会使用设置的默认值<code>小王子</code>作为Name字段的值。</p>
-<p>**注意：**所有字段的零值, 比如<code>0</code>, <code>&quot;&quot;</code>,<code>false</code>或者其它<code>零值</code>，都不会保存到数据库内，但会使用他们的默认值。 如果你想避免这种情况，可以考虑使用指针或实现 <code>Scanner/Valuer</code>接口，比如：</p>
-<h3 id="使用指针方式实现零值存入数据库">使用指针方式实现零值存入数据库</h3>
-<pre><code class="language-go">// 使用指针
-type User struct {
-  ID   int64
-  Name *string `gorm:&quot;default:'小王子'&quot;`
-  Age  int64
-}
-user := User{Name: new(string), Age: 18))}
-db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
-</code></pre>
-<h3 id="使用scannervaluer接口方式实现零值存入数据库">使用Scanner/Valuer接口方式实现零值存入数据库</h3>
-<pre><code class="language-go">// 使用 Scanner/Valuer
-type User struct {
-	ID int64
-	Name sql.NullString `gorm:&quot;default:'小王子'&quot;` // sql.NullString 实现了Scanner/Valuer接口
-	Age  int64
-}
-user := User{Name: sql.NullString{&quot;&quot;, true}, Age:18}
-db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
-</code></pre>
-
+                    
                 </div>
             </article>
         </div>
-
-        
-            <div class="next-post">
-                <div class="next gt-c-content-color-first">下一篇</div>
-                <a href="https://ChicRingo.github.io/post/golang-zhong-range-de-keng/" class="post-title gt-a-link">
-                    Golang 中 range 的坑
-                </a>
-            </div>
-        
-
-        
-            <span id="/post/golang-zhong-ling-zhi-de-keng/" class="leancloud_visitors" data-flag-title="Golang 中零值的坑">
-                <em class="post-meta-item-text">阅读量 </em>
-                <i class="leancloud-visitors-count">0</i>
-            </span>
-        
-
+        <br>
         
 
         
@@ -194,6 +124,7 @@ db.Create(&amp;user)  // 此时数据库中该条记录name字段的值就是''
 </script>
 
         
+
 
         <div class="site-footer gt-c-content-color-first">
     <div class="slogan gt-c-content-color-first">温故而知新</div>
